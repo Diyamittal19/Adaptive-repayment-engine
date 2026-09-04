@@ -1,7 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { ChevronDown, CreditCard, Lightbulb, ShieldCheck } from "lucide-react";
 import ScoreGauge from "./ScoreGauge";
-import { getMyCreditPassport, bandTone } from "@/lib/creditPassport";
+import { getMyCreditPassport, bandTone, type CreditPassport } from "@/lib/creditPassport";
+import { supabase } from "@/lib/supabaseClient";
+import { DEMO_MODE, demoPayments, demoIncomeLog, demoMyRequests } from "@/lib/demoData";
 
 const bandCopy: Record<string, string> = {
   Excellent: "Lenders can rely on this score as strong proof of your repayment behaviour.",
@@ -10,10 +12,118 @@ const bandCopy: Record<string, string> = {
   Building: "Early days — every on-time payment from here moves this up.",
 };
 
+function monthKey(d: Date) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
+
+type IncomeSourceEntry = { monthK: string; income: number };
+type HardshipEntry = { monthK: string };
+
+// Computes the real inputs scoreIncomeConsistency() needs (see
+// creditPassport.ts) from actual payment cycles, self-logged income, and
+// hardship request dates — the same "months since first activity" and
+// "reported income vs. hardship timing" signals described there.
+function buildIncomeConsistencyInput(income: IncomeSourceEntry[], hardship: HardshipEntry[]) {
+  if (income.length === 0) {
+    return { monthsLogged: 0, monthsExpected: 0, hardshipRequestMonthIncomes: [], avgIncome: 0 };
+  }
+
+  const byMonth = new Map<string, number>();
+  for (const e of income) byMonth.set(e.monthK, (byMonth.get(e.monthK) ?? 0) + e.income);
+
+  const months = Array.from(byMonth.keys()).sort();
+  const earliest = months[0];
+  const [ey, em] = earliest.split("-").map(Number);
+  const now = new Date();
+  const monthsExpected = (now.getFullYear() - ey) * 12 + (now.getMonth() + 1 - em) + 1;
+
+  const avgIncome = Array.from(byMonth.values()).reduce((s, v) => s + v, 0) / byMonth.size;
+
+  const hardshipRequestMonthIncomes = hardship
+    .map((h) => byMonth.get(h.monthK))
+    .filter((v): v is number => v !== undefined);
+
+  return { monthsLogged: byMonth.size, monthsExpected, hardshipRequestMonthIncomes, avgIncome };
+}
+
 export default function CreditPassportCard() {
-  const passport = getMyCreditPassport();
-  const tone = bandTone(passport.band);
   const [expanded, setExpanded] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [income, setIncome] = useState<IncomeSourceEntry[]>([]);
+  const [hardship, setHardship] = useState<HardshipEntry[]>([]);
+
+  useEffect(() => {
+    let active = true;
+
+    async function load() {
+      if (DEMO_MODE) {
+        if (!active) return;
+        const incomeEntries: IncomeSourceEntry[] = [
+          ...demoPayments.map((p) => ({ monthK: monthKey(new Date(p.cycle_month)), income: p.income_that_cycle })),
+          ...demoIncomeLog.map((e) => ({
+            monthK: monthKey(new Date(e.loggedAt)),
+            income: e.frequency === "daily" ? Math.round(e.amount * 30) : e.frequency === "weekly" ? Math.round(e.amount * 4.33) : e.amount,
+          })),
+        ];
+        const hardshipEntries: HardshipEntry[] = demoMyRequests
+          .filter((r) => r.kind === "hardship")
+          .map((r) => ({ monthK: monthKey(new Date(r.sentOnDate)) }));
+        setIncome(incomeEntries);
+        setHardship(hardshipEntries);
+        setLoading(false);
+        return;
+      }
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user || !active) return;
+
+      const { data: loanRows } = await supabase.from("loans").select("id").eq("borrower_id", user.id);
+      const loanIds = (loanRows ?? []).map((l) => l.id);
+
+      const [{ data: paymentRows }, { data: incomeRows }, { data: hardshipRows }] = await Promise.all([
+        loanIds.length
+          ? supabase.from("payments").select("cycle_month, income_that_cycle").in("loan_id", loanIds)
+          : Promise.resolve({ data: [] as { cycle_month: string; income_that_cycle: number }[] }),
+        supabase.from("income_log").select("amount, frequency, logged_at").eq("borrower_id", user.id),
+        loanIds.length
+          ? supabase.from("requests").select("created_at").eq("type", "hardship").in("loan_id", loanIds)
+          : Promise.resolve({ data: [] as { created_at: string }[] }),
+      ]);
+
+      if (!active) return;
+
+      const incomeEntries: IncomeSourceEntry[] = [
+        ...(paymentRows ?? []).map((p) => ({ monthK: monthKey(new Date(p.cycle_month)), income: p.income_that_cycle })),
+        ...(incomeRows ?? []).map((e) => ({
+          monthK: monthKey(new Date(e.logged_at)),
+          income: e.frequency === "daily" ? Math.round(e.amount * 30) : e.frequency === "weekly" ? Math.round(e.amount * 4.33) : e.amount,
+        })),
+      ];
+      const hardshipEntries: HardshipEntry[] = (hardshipRows ?? []).map((r) => ({ monthK: monthKey(new Date(r.created_at)) }));
+
+      setIncome(incomeEntries);
+      setHardship(hardshipEntries);
+      setLoading(false);
+    }
+
+    load();
+    return () => { active = false; };
+  }, []);
+
+  const passport: CreditPassport | null = useMemo(() => {
+    if (loading) return null;
+    return getMyCreditPassport(buildIncomeConsistencyInput(income, hardship));
+  }, [loading, income, hardship]);
+
+  if (loading || !passport) {
+    return (
+      <div className="rounded-xl border border-border bg-card shadow-card p-5">
+        <p className="text-sm text-muted-foreground">Loading your credit passport…</p>
+      </div>
+    );
+  }
+
+  const tone = bandTone(passport.band);
 
   return (
     <div className="rounded-xl border border-border bg-card shadow-card p-5">

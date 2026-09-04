@@ -59,6 +59,26 @@ export const demoExpenses = [
 
 export const demoSavingsBalance = 6000;
 
+// Dated savings deposits/withdrawals — sums to demoSavingsBalance above.
+// Positive = deposit ("Log savings"), negative = withdrawal ("Log savings
+// used"). Used to break the running balance down by month for the trend
+// chart, the same way demoPayments/demoExpenses are.
+export const demoSavingsLog = [
+  { amount: 2000, date: "2026-06-01" },
+  { amount: 2500, date: "2026-07-01" },
+  { amount: 1500, date: "2026-08-01" },
+];
+
+// Self-reported income entries via the "Log income" feature. Only covers
+// the current cycle (September) — earlier months already have income
+// from demoPayments (that data represents the loan's historical payment
+// cycles, not self-reported logs), so adding entries there would double-
+// count. This is what fills the gap for months with no payment-cycle
+// record yet.
+export const demoIncomeLog: { id: number; amount: number; frequency: "daily" | "weekly" | "monthly"; loggedAt: string }[] = [
+  { id: 1, amount: 20000, frequency: "monthly", loggedAt: "2026-09-04" },
+];
+
 export const demoOccupation = "Gig delivery / rideshare";
 
 export const demoGoals = [
@@ -129,6 +149,7 @@ export const demoMyRequests = [
     purpose: "Bike broke down, lost a week of work getting it repaired",
     tenure: "This cycle only",
     sentOn: "Aug 20, 2026",
+    sentOnDate: "2026-08-20",
     status: "Pending" as const,
     history: [],
   },
@@ -142,6 +163,7 @@ export const demoMyRequests = [
     purpose: "Fewer gig deliveries this month, festival season slowdown",
     tenure: "This cycle only",
     sentOn: "Jun 3, 2026",
+    sentOnDate: "2026-06-03",
     status: "Approved" as const,
     history: [],
   },
@@ -155,6 +177,7 @@ export const demoMyRequests = [
     purpose: "Buy a delivery bike",
     tenure: "12 months",
     sentOn: "Aug 25, 2026",
+    sentOnDate: "2026-08-25",
     status: "Negotiating" as const,
     history: [
       { id: 1, from: "borrower" as const, amount: 25000, note: "Would really help get a reliable bike for deliveries", date: "Aug 25, 2026" },
@@ -171,6 +194,7 @@ export const demoMyRequests = [
     purpose: "Working capital for a small side business",
     tenure: "18 months",
     sentOn: "Jul 10, 2026",
+    sentOnDate: "2026-07-10",
     status: "Approved" as const,
     history: [],
   },
@@ -184,6 +208,7 @@ export const demoMyRequests = [
     purpose: "Medical emergency",
     tenure: "6 months",
     sentOn: "May 2, 2026",
+    sentOnDate: "2026-05-02",
     status: "Rejected" as const,
     history: [],
   },

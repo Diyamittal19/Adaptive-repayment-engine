@@ -24,7 +24,7 @@ import {
 import type { ReactNode } from "react";
 import CreditPassportCard from "@/components/passport/CreditPassportCard";
 import { supabase } from "@/lib/supabaseClient";
-import { DEMO_MODE, demoLoan, demoLenderName, demoPayments, demoPendingHardship } from "@/lib/demoData";
+import { DEMO_MODE, demoLoan, demoLenderName, demoPayments, demoPendingHardship, demoPlatformLoans } from "@/lib/demoData";
 
 // ─── Shared primitives (Card, StatCard, IncomeChart, StatusBar) ───────────
 
@@ -166,12 +166,25 @@ type Payment = {
   income_that_cycle: number;
 };
 
+// The borrower can have more than one active loan (see the Lenders tab's
+// Platform Loans list) — this is used for "This month's payment" and the
+// "Upcoming loan payment" table so those totals match what's shown there,
+// instead of only reflecting a single loan.
+type ActiveLoanSummary = {
+  id: number;
+  lenderName: string;
+  targetAmount: number;
+  dueDate: string;
+  status: string;
+};
+
 export default function Dashboard({ onNavigateToRequests }: { onNavigateToRequests?: () => void }) {
   const [showAlert, setShowAlert] = useState(false);
   const [loading, setLoading] = useState(true);
   const [loan, setLoan] = useState<Loan | null>(null);
   const [lenderName, setLenderName] = useState<string>("");
   const [payments, setPayments] = useState<Payment[]>([]);
+  const [allLoans, setAllLoans] = useState<ActiveLoanSummary[]>([]);
 
   useEffect(() => {
     let active = true;
@@ -183,6 +196,11 @@ export default function Dashboard({ onNavigateToRequests }: { onNavigateToReques
         setLenderName(demoLenderName);
         setPayments(demoPayments);
         setShowAlert(demoPendingHardship);
+        setAllLoans(
+          demoPlatformLoans
+            .filter((l) => l.status === "active" || l.status === "overdue")
+            .map((l) => ({ id: l.id, lenderName: l.lenderName, targetAmount: l.targetAmount, dueDate: l.dueDate, status: l.status }))
+        );
         setLoading(false);
         return;
       }
@@ -229,6 +247,30 @@ export default function Dashboard({ onNavigateToRequests }: { onNavigateToReques
       setLenderName(lenderProfile?.name ?? "your lender");
       setPayments(paymentRows ?? []);
       setShowAlert(!!pendingRequest);
+
+      const { data: activeLoanRows } = await supabase
+        .from("loans")
+        .select("id, target_amount, due_date, status, lender_id")
+        .eq("borrower_id", user.id)
+        .in("status", ["active", "overdue"]);
+
+      if (!active) return;
+      if (activeLoanRows && activeLoanRows.length > 0) {
+        const { data: lenderProfiles } = await supabase
+          .from("profiles")
+          .select("id, name")
+          .in("id", [...new Set(activeLoanRows.map((l) => l.lender_id))]);
+        const nameById = new Map((lenderProfiles ?? []).map((p) => [p.id, p.name]));
+        setAllLoans(
+          activeLoanRows.map((l) => ({
+            id: l.id,
+            lenderName: nameById.get(l.lender_id) ?? "Unknown lender",
+            targetAmount: l.target_amount,
+            dueDate: l.due_date,
+            status: l.status,
+          }))
+        );
+      }
       setLoading(false);
     }
 
@@ -257,6 +299,11 @@ export default function Dashboard({ onNavigateToRequests }: { onNavigateToReques
   const latestPayment = payments[payments.length - 1];
   const previousPayment = payments[payments.length - 2];
   const thisMonthsPayment = latestPayment?.amount_due ?? loan.target_amount;
+  // Sum across every active loan (see allLoans above) so this matches the
+  // total shown in the Lenders tab, instead of only this one loan's figure.
+  const totalThisMonthsPayment = allLoans.length
+    ? allLoans.reduce((sum, l) => sum + l.targetAmount, 0)
+    : thisMonthsPayment;
   const carriedForwardDelta = previousPayment
     ? loan.outstanding - previousPayment.amount_due + previousPayment.amount_paid
     : 0;
@@ -311,9 +358,9 @@ export default function Dashboard({ onNavigateToRequests }: { onNavigateToReques
           tone="success"
           label="This month's payment"
           icon={<IndianRupee className="size-4" />}
-          value={inr(thisMonthsPayment)}
+          value={inr(totalThisMonthsPayment)}
           chipText={latestPayment?.paid_on_time ? "On track" : undefined}
-          note="based on your income this cycle"
+          note={allLoans.length > 1 ? `across ${allLoans.length} lenders` : "based on your income this cycle"}
         />
         <StatCard
           tone="warning"
@@ -418,26 +465,39 @@ export default function Dashboard({ onNavigateToRequests }: { onNavigateToReques
               </tr>
             </thead>
             <tbody>
-              <tr className="border-b border-border last:border-0">
-                <td className="py-4 text-sm font-medium text-foreground">{lenderName}</td>
-                <td className="py-4 text-sm text-foreground">
-                  {dueDateLabel}
-                  <span className="block text-xs text-muted-foreground">
-                    {daysUntilDue >= 0 ? `in ${daysUntilDue} days` : "overdue"}
-                  </span>
-                </td>
-                <td className="py-4 font-mono text-sm text-foreground">{inr(thisMonthsPayment)}</td>
-                <td className="py-4">
-                  <span className="inline-flex rounded-full bg-info/10 px-2.5 py-1 text-xs font-medium text-info">
-                    Upcoming
-                  </span>
-                </td>
-                <td className="py-4 text-right">
-                  <button className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted">
-                    View
-                  </button>
-                </td>
-              </tr>
+              {(allLoans.length
+                ? allLoans
+                : [{ id: loan.id, lenderName, targetAmount: thisMonthsPayment, dueDate: loan.due_date, status: loan.status }]
+              ).map((l, i, arr) => {
+                const rowDueDateLabel = new Date(l.dueDate).toLocaleDateString("en-IN", {
+                  day: "numeric",
+                  month: "short",
+                  year: "numeric",
+                });
+                const rowDaysUntilDue = Math.ceil((new Date(l.dueDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+                return (
+                  <tr key={l.id} className={i !== arr.length - 1 ? "border-b border-border" : ""}>
+                    <td className="py-4 text-sm font-medium text-foreground">{l.lenderName}</td>
+                    <td className="py-4 text-sm text-foreground">
+                      {rowDueDateLabel}
+                      <span className="block text-xs text-muted-foreground">
+                        {rowDaysUntilDue >= 0 ? `in ${rowDaysUntilDue} days` : "overdue"}
+                      </span>
+                    </td>
+                    <td className="py-4 font-mono text-sm text-foreground">{inr(l.targetAmount)}</td>
+                    <td className="py-4">
+                      <span className="inline-flex rounded-full bg-info/10 px-2.5 py-1 text-xs font-medium text-info">
+                        Upcoming
+                      </span>
+                    </td>
+                    <td className="py-4 text-right">
+                      <button className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted">
+                        View
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

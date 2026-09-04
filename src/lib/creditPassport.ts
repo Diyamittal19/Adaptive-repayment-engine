@@ -138,6 +138,40 @@ function weightedAvg(values: { weight: number; value: number }[]) {
   return values.reduce((s, v) => s + v.value * v.weight, 0) / totalWeight;
 }
 
+// ── income-reporting consistency ────────────────────────────────────────
+// This exists to address a real gap: repayment amounts are calculated off
+// self-reported income (see src/pages/borrower/Tracker.tsx's "Log
+// income"), which creates an obvious incentive to underreport. This can't
+// detect a lie directly — there's no verified income source wired up yet
+// (see the README/conversation notes on Account Aggregator or gig-platform
+// APIs as the real fix) — but it CAN reward the two things that are
+// actually computable from data the app already has:
+//   1. Reporting regularly (not skipping cycles), since a thin or gappy
+//      log is weaker evidence either way.
+//   2. Not filing a hardship request in the same month as an
+//      above-average income claim — a borrower who's consistently doing
+//      this is a visible red flag even without verified data.
+export function scoreIncomeConsistency(input: {
+  monthsLogged: number;
+  monthsExpected: number; // months since the borrower joined/first loan
+  hardshipRequestMonthIncomes: number[]; // reported income for each month a hardship request was filed
+  avgIncome: number; // trailing average of reported income
+}): number {
+  const { monthsLogged, monthsExpected, hardshipRequestMonthIncomes, avgIncome } = input;
+
+  if (monthsExpected <= 0) return 70; // thin file — neutral, not penalized
+
+  const completeness = Math.min(1, monthsLogged / monthsExpected);
+  let score = 55 + completeness * 40; // 55–95 based on how consistently they've logged
+
+  const suspiciousCount = avgIncome > 0
+    ? hardshipRequestMonthIncomes.filter((income) => income >= avgIncome).length
+    : 0;
+  score -= suspiciousCount * 18;
+
+  return clamp(score);
+}
+
 const FACTOR_COPY: Record<string, Record<Band, { detail: string; tip: string }>> = {
   onTime: {
     Excellent: { detail: "Has paid on schedule almost every cycle.", tip: "Strongest factor — keep going." },
@@ -169,6 +203,12 @@ const FACTOR_COPY: Record<string, Record<Band, { detail: string; tip: string }>>
     Fair: { detail: "Has made some effort even during a difficult stretch.", tip: "Asking for help before missing a payment counts in their favour." },
     Building: { detail: "A loan went to default without a repayment attempt on record.", tip: "A proactive partial payment next time rebuilds this quickly." },
   },
+  incomeConsistency: {
+    Excellent: { detail: "Logs income almost every cycle, and hardship requests line up with genuinely lower-income months.", tip: "This is the strongest evidence a lender has that reported income is trustworthy — keep logging every cycle." },
+    Good: { detail: "Logs income fairly regularly, with reported figures that generally line up with when help was requested.", tip: "Logging every single cycle, even a rough estimate, closes this gap." },
+    Fair: { detail: "Income reporting has some gaps, or a hardship request landed in a month with an above-average reported income.", tip: "Log income every cycle, even when it's a bad month — gaps read as weaker evidence, not neutral." },
+    Building: { detail: "Income reporting is thin or irregular, which makes it hard for a lender to trust the numbers behind a hardship request.", tip: "Logging income consistently, cycle after cycle, is the fastest way to build this up." },
+  },
 };
 
 function factorCopy(key: string, score: number) {
@@ -181,13 +221,15 @@ function buildFactors(agg: {
   debtLoad: number;
   completion: number;
   goodFaith: number;
+  incomeConsistency: number;
 }): PassportFactor[] {
   const defs: { key: string; label: string; weight: number }[] = [
-    { key: "onTime", label: "On-time repayment rate", weight: 0.3 },
-    { key: "consistency", label: "Repayment consistency", weight: 0.2 },
+    { key: "onTime", label: "On-time repayment rate", weight: 0.25 },
+    { key: "consistency", label: "Repayment consistency", weight: 0.15 },
     { key: "debtLoad", label: "Current debt load", weight: 0.15 },
-    { key: "completion", label: "Loan completion history", weight: 0.2 },
-    { key: "goodFaith", label: "Proactive communication", weight: 0.15 },
+    { key: "completion", label: "Loan completion history", weight: 0.15 },
+    { key: "goodFaith", label: "Proactive communication", weight: 0.1 },
+    { key: "incomeConsistency", label: "Income reporting consistency", weight: 0.2 },
   ];
   return defs.map((d) => {
     const score = clamp((agg as Record<string, number>)[d.key]);
@@ -269,7 +311,12 @@ const MY_LEDGERS: LedgerLike[] = [
   ]},
 ];
 
-export function getMyCreditPassport(): CreditPassport {
+export function getMyCreditPassport(incomeConsistencyInput?: {
+  monthsLogged: number;
+  monthsExpected: number;
+  hardshipRequestMonthIncomes: number[];
+  avgIncome: number;
+}): CreditPassport {
   const per = MY_LEDGERS.map(scoreLedger);
   const agg = {
     onTime: weightedAvg(per.map((p) => ({ weight: p.weight, value: p.onTime }))),
@@ -277,6 +324,10 @@ export function getMyCreditPassport(): CreditPassport {
     debtLoad: weightedAvg(per.map((p) => ({ weight: p.weight, value: p.debtLoad }))),
     completion: weightedAvg(per.map((p) => ({ weight: p.weight, value: p.completion }))),
     goodFaith: weightedAvg(per.map((p) => ({ weight: p.weight, value: p.goodFaith }))),
+    // Backward compatible: callers that don't pass real income data (or
+    // haven't been updated yet) get a neutral, non-penalizing score
+    // rather than this factor silently dragging their overall score down.
+    incomeConsistency: incomeConsistencyInput ? scoreIncomeConsistency(incomeConsistencyInput) : 70,
   };
   const factors = buildFactors(agg);
   const overallScore = clamp(factors.reduce((s, f) => s + f.score * f.weight, 0));
@@ -525,6 +576,7 @@ function passportFromLedgerRecord(rec: BorrowerLedgerRecord): CreditPassport {
     debtLoad: per.debtLoad,
     completion: per.completion,
     goodFaith: per.goodFaith,
+    incomeConsistency: 70, // no real income-log data for other borrowers' seed profiles yet
   });
   const completed = rec.status === "paid" || rec.status === "settled-early" ? 1 : 0;
   const active = rec.status === "active" || rec.status === "overdue" ? 1 : 0;
@@ -560,7 +612,7 @@ function passportFromHardship(h: HardshipSeed): CreditPassport {
   const completion = h.status === "Approved" ? 70 : 60;
   const goodFaith = h.repeat ? 74 : 80;
 
-  const factors = buildFactors({ onTime, consistency, debtLoad, completion, goodFaith });
+  const factors = buildFactors({ onTime, consistency, debtLoad, completion, goodFaith, incomeConsistency: 70 });
   return passportFromFactors(h.loanId, h.name, h.role, factors, {
     loansCompleted: 0,
     activeLoans: 1,

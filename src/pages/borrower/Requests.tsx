@@ -385,6 +385,7 @@ interface SentRequest {
   purpose: string
   tenure: string
   sentOn: string
+  sentOnDate: string // ISO date (YYYY-MM-DD) — for computation; `sentOn` above is display-only
   status: MyRequestStatus
   history: NegotiationEntry[]
 }
@@ -700,7 +701,7 @@ function MyRequests({
    ========================================================================= */
 
 export default function Requests() {
-  const [view, setView] = useState<"find" | "mine">("mine")
+  const [view, setView] = useState<"find" | "mine">("find")
   const [loading, setLoading] = useState(true)
   const [userId, setUserId] = useState<string | null>(null)
   const [requests, setRequests] = useState<SentRequest[]>([])
@@ -724,6 +725,7 @@ export default function Requests() {
       purpose: r.note ?? "",
       tenure: r.repeat ? "Multiple cycles" : "This cycle only",
       sentOn: new Date(r.created_at).toLocaleDateString("en-IN", { dateStyle: "medium" }),
+      sentOnDate: r.created_at.slice(0, 10),
       status: r.status as MyRequestStatus,
       history: [] as NegotiationEntry[],
     }))
@@ -784,6 +786,7 @@ export default function Requests() {
         purpose: a.purpose ?? "",
         tenure: a.tenure ?? "",
         sentOn: new Date(a.created_at).toLocaleDateString("en-IN", { dateStyle: "medium" }),
+        sentOnDate: a.created_at.slice(0, 10),
         status: a.status,
         history: (offerRows ?? [])
           .filter((o) => o.application_id === a.id)
@@ -843,6 +846,7 @@ export default function Requests() {
           purpose,
           tenure,
           sentOn: "Today",
+          sentOnDate: new Date().toISOString().slice(0, 10),
           status: "Pending",
           history: [{ id: Date.now(), from: "borrower" as const, amount: amt, note: purpose, date: "Today" }],
         },
@@ -875,6 +879,7 @@ export default function Requests() {
         purpose,
         tenure,
         sentOn: "Today",
+        sentOnDate: new Date().toISOString().slice(0, 10),
         status: "Pending",
         history: offerRow ? [{ id: offerRow.id, from: "borrower", amount: amt, note: purpose, date: "Today" }] : [],
       },
@@ -974,6 +979,7 @@ export default function Requests() {
           purpose: note,
           tenure: repeat ? "Multiple cycles" : "This cycle only",
           sentOn: "Today",
+          sentOnDate: new Date().toISOString().slice(0, 10),
           status: "Pending",
           history: [],
         },
@@ -1000,6 +1006,7 @@ export default function Requests() {
         purpose: note,
         tenure: repeat ? "Multiple cycles" : "This cycle only",
         sentOn: "Today",
+        sentOnDate: new Date().toISOString().slice(0, 10),
         status: "Pending",
         history: [],
       },
