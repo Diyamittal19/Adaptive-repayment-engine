@@ -480,7 +480,7 @@ function ManualLedger() {
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by lender name or phone\u2026"
+            placeholder="Search by lender name or phone"
             className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
           />
         </div>

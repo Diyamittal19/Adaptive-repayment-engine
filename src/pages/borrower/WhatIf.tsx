@@ -3,7 +3,27 @@ import { AlertTriangle, ArrowRight, SlidersHorizontal, TriangleAlert } from "luc
 import { Slider } from "@/components/ui/slider";
 import VoiceButton from "@/components/voice/VoiceButton";
 import { supabase } from "@/lib/supabaseClient";
+import { DEMO_MODE, demoLoan, demoPayments, demoMyRequests } from "@/lib/demoData";
 import { inr, simulateIndividual, type Borrower, type Severity } from "@/lib/simulator";
+
+// Used whenever the signed-in borrower doesn't have an active loan yet (or
+// isn't signed in at all) — the What-If simulator should still be usable to
+// explore, just with generic placeholder numbers instead of blocking the
+// whole page behind an empty state.
+const SAMPLE_LOAN: Borrower = {
+  id: "sample",
+  name: "You",
+  firstName: "you",
+  loanId: "AR-SAMPLE",
+  target: 4500,
+  baseIncome: 9000,
+  floor: 2000,
+  ceiling: 7000,
+  deferredBalance: 0,
+  floorHits: 0,
+  floorHitWindow: 3,
+  hardshipRequests: 0,
+};
 
 type Preset = {
   id: string;
@@ -177,7 +197,8 @@ function GuardrailRail({
 
 export default function WhatIf() {
   const [loading, setLoading] = useState(true);
-  const [myLoan, setMyLoan] = useState<Borrower | null>(null);
+  const [myLoan, setMyLoan] = useState<Borrower>(SAMPLE_LOAN);
+  const [hasRealLoan, setHasRealLoan] = useState(false);
   const [shock, setShock] = useState(0);
   const [floor, setFloor] = useState(2000);
   const [ceiling, setCeiling] = useState(7000);
@@ -197,10 +218,47 @@ export default function WhatIf() {
     let active = true;
 
     async function load() {
+      if (DEMO_MODE) {
+        if (!active) return;
+        const floorHitWindow = Math.min(3, demoPayments.length) || 3;
+        const recent = demoPayments.slice(-floorHitWindow);
+        const floorHits = recent.filter((p) => p.amount_paid <= demoLoan.floor).length;
+        const latestIncome = demoPayments.length
+          ? demoPayments[demoPayments.length - 1].income_that_cycle
+          : demoLoan.target_amount * 2.5;
+
+        const loan: Borrower = {
+          id: String(demoLoan.id),
+          name: "You",
+          firstName: "you",
+          loanId: `AR-${demoLoan.id}`,
+          target: demoLoan.target_amount,
+          baseIncome: latestIncome,
+          floor: demoLoan.floor,
+          ceiling: demoLoan.ceiling,
+          deferredBalance: demoLoan.outstanding,
+          floorHits,
+          floorHitWindow,
+          hardshipRequests: demoMyRequests.filter((r) => r.kind === "hardship").length,
+        };
+
+        setMyLoan(loan);
+        setHasRealLoan(true);
+        setFloor(loan.floor);
+        setCeiling(loan.ceiling);
+        setLoading(false);
+        return;
+      }
+
       const {
         data: { user },
       } = await supabase.auth.getUser();
-      if (!user || !active) return;
+      if (!user || !active) {
+        // Not signed in (or no session) — stay on the sample loan instead
+        // of leaving the page stuck on "Loading…" forever.
+        if (active) setLoading(false);
+        return;
+      }
 
       const { data: loanRow } = await supabase
         .from("loans")
@@ -212,6 +270,8 @@ export default function WhatIf() {
 
       if (!active) return;
       if (!loanRow) {
+        // No active loan yet — keep the sample loan so the simulator is
+        // still usable, just not flagged as a real one.
         setLoading(false);
         return;
       }
@@ -251,6 +311,7 @@ export default function WhatIf() {
       };
 
       setMyLoan(loan);
+      setHasRealLoan(true);
       setFloor(loan.floor);
       setCeiling(loan.ceiling);
       setLoading(false);
@@ -359,21 +420,15 @@ export default function WhatIf() {
     );
   }
 
-  if (!myLoan) {
-    return (
-      <div className="flex h-64 items-center justify-center px-6 text-center">
-        <p className="text-sm text-muted-foreground">
-          No active loan found yet. Once a lender sets one up for you, you'll be able to model
-          scenarios here.
-        </p>
-      </div>
-    );
-  }
-
   return (
     <div className="min-w-0 bg-background">
       <main className="min-w-0 px-5 py-8 sm:px-8 lg:px-10">
         <div className="mx-auto max-w-6xl">
+          {!hasRealLoan && (
+            <div className="mb-5 rounded-xl border border-border bg-secondary/60 px-4 py-2.5 text-xs text-muted-foreground">
+              You don't have an active loan yet, so this is a sample scenario — the numbers below aren't tied to a real loan. Once a lender sets one up for you, this page will model your actual loan instead.
+            </div>
+          )}
           {/* Header */}
           <header className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
             <div>
