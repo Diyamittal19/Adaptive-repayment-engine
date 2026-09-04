@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # Adaptive Repayment
 
 One React app. Landing, login/signup, borrower dashboard, and lender
@@ -106,35 +105,3 @@ every new/changed file parses cleanly, but I haven't been able to
 actually record audio and click through the flow myself. If a mic button
 does something unexpected, send me the error from the browser console
 and/or the backend terminal.
-=======
-# Adaptive Repayment
-
-One React app. Landing, login/signup, borrower dashboard, and lender
-dashboard all live here, routed with React Router — no gateway, no
-separate builds, no multiple ports.
-
-## Quick start
-
-```powershell
-npm install
-npm run dev
-```
-
-## Structure
-
-```
-src/
-├── App.tsx              top-level routes
-├── index.css             one shared design system for the whole app
-├── main.tsx
-├── lib/                  shared helpers (utils, the What-If simulator)
-├── components/ui/        shared UI primitives (slider)
-└── pages/
-    ├── landing/          "/"            marketing page
-    ├── login/            "/login"        login + signup, role toggle
-    ├── borrower/         "/borrower/*"   borrower dashboard
-    └── lender/           "/lender/*"     lender dashboard
-```
-
-
->>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50

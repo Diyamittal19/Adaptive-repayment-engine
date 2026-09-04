@@ -6,27 +6,18 @@ backend exists purely to hold secret API keys that must never reach the
 browser, starting with the AI provider key.
 
 AI provider is Google **Gemini**, called server-side via the Generative
-<<<<<<< HEAD
 Language REST API (`generateContent`) — for both the What-If insight
 explainer and the voice feature (speech-to-text via Gemini's audio
 understanding, then structured extraction from the transcript). One
 provider, one key, for everything AI-related in this backend.
-=======
-Language REST API (`generateContent`).
->>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
 
 ## Setup
 
 ```bash
 cd backend
 npm install
-<<<<<<< HEAD
 cp .env .env.local   # or just edit .env directly — see note below
 # fill in GEMINI_API_KEY — https://aistudio.google.com/apikey
-=======
-cp .env.example .env
-# fill in GEMINI_API_KEY in .env — get one at https://aistudio.google.com/apikey
->>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
 npm run dev
 ```
 
@@ -42,7 +33,6 @@ Runs on `http://localhost:3001` by default.
   a plain-English Gemini explanation + recommendation grounded in all of it.
   The model is given the numbers as ground truth — it explains and contextualizes
   them, it doesn't recompute them.
-<<<<<<< HEAD
 - `POST /api/voice/transcribe` — body is a raw audio clip (`audio/webm`,
   `audio/mp4`, etc. — whatever `MediaRecorder` produced in the browser, sent
   as the raw request body, not multipart). Sends it to Gemini's audio
@@ -62,15 +52,3 @@ See `.env`. `GEMINI_API_KEY` is the only one that's required — it's used by
 `/api/whatif/insight` and both `/api/voice` routes. The server starts fine
 without it, but those routes return an error until it's set. `GEMINI_MODEL`
 is optional and has a sane default.
-=======
-- `POST /api/voice` — placeholder, not implemented. See `routes/voice.js` for
-  the three different things "voice" could mean here and why the choice
-  changes the implementation.
-
-## Env vars
-
-See `.env.example`. `GEMINI_API_KEY` is the only one that's required for
-`/api/whatif/insight` to work; the server will start without it but that
-route will return an error until it's set. `GEMINI_MODEL` is optional
-(defaults to `gemini-2.5-flash`).
->>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
