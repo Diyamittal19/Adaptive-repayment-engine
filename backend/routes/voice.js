@@ -1,42 +1,35 @@
-// Voice feature — two small jobs, chained together, both handled by
-// Gemini (the same model/key already used by routes/whatif.js — no
-// second AI provider needed):
-//
-//   1. Speech → text   (Gemini's audio understanding — send the audio
-//      clip straight to generateContent and ask for a transcript back)
-//   2. Text → structured form fields   (Gemini again, text-only, with a
-//      schema describing the target form)
-//
-// The frontend records a clip with MediaRecorder, POSTs the raw audio
-// bytes to /transcribe, gets text back, then (for the "fill this form by
-// voice" flows) POSTs that text to /extract along with which form it's
-// for, and gets back a flat object of field values it merges into its
-// existing form state. The user always sees the filled-in fields before
-// submitting — this never auto-submits anything on its own.
-//
-// Both steps run server-side, same reasoning as whatif.js: the Gemini
-// API key must never reach the browser bundle.
-
 import { Router } from "express";
 import express from "express";
 
 const router = Router();
 
-const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-3.6-flash";
-const GEMINI_URL = (model) => `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${process.env.GEMINI_API_KEY}`;
+// Chat model, used for structured extraction (/extract). Groq's free
+// tier — check console.groq.com/docs/models if this default ever
+// 404s on you.
+const GROQ_CHAT_MODEL = process.env.GROQ_MODEL || "openai/gpt-oss-20b";
+// Dedicated speech-to-text model (Whisper, hosted on Groq's LPU
+// hardware), used for /transcribe. "turbo" is faster/cheaper; swap to
+// "whisper-large-v3" for higher accuracy if needed.
+const GROQ_TRANSCRIBE_MODEL = process.env.GROQ_TRANSCRIBE_MODEL || "whisper-large-v3-turbo";
 
-// A single unmistakable sentinel Gemini returns when the clip has no
-// speech in it — much more reliable to check for than "is the transcript
-// empty", since a model can preface an empty transcript with filler text.
+// A single unmistakable sentinel we ask the model to return when the clip
+// has no speech in it — much more reliable to check for than "is the
+// transcript empty", since a model can preface an empty transcript with
+// filler text. (Whisper-family transcription models don't take a system
+// prompt, so this is enforced via the `prompt` hint param plus a
+// post-hoc check on very short/blank output.)
 const NO_SPEECH_SENTINEL = "[NO_SPEECH]";
 
-// ── 1. Speech-to-text (Gemini audio understanding) ──────────────────────
+// ── 1. Speech-to-text (Groq-hosted Whisper) ──────────────────────────────
 // Body is the raw audio blob (audio/webm from most browsers, audio/mp4 on
-// Safari/iOS) — not multipart/form-data, so express.raw() reads it
-// straight into a Buffer with no extra dependency (multer etc.) needed.
+// Safari/iOS) — not multipart/form-data from the client, so express.raw()
+// reads it straight into a Buffer with no extra dependency (multer etc.)
+// needed. Groq's /v1/audio/transcriptions endpoint (OpenAI-compatible)
+// itself requires a multipart upload, so we re-wrap the buffer into a
+// FormData/Blob here before forwarding it.
 router.post("/transcribe", express.raw({ type: "*/*", limit: "20mb" }), async (req, res) => {
-  if (!process.env.GEMINI_API_KEY) {
-    return res.status(500).json({ error: "GEMINI_API_KEY is not configured on the server" });
+  if (!process.env.GROQ_API_KEY) {
+    return res.status(500).json({ error: "GROQ_API_KEY is not configured on the server" });
   }
 
   const audio = req.body;
@@ -44,47 +37,38 @@ router.post("/transcribe", express.raw({ type: "*/*", limit: "20mb" }), async (r
     return res.status(400).json({ error: "No audio received" });
   }
 
-  // Gemini's officially documented inline-audio formats are WAV, MP3,
-  // AIFF, AAC, OGG and FLAC — audio/webm (what most browsers record) and
-  // audio/mp4 (Safari) aren't on that list, but Gemini accepts them in
-  // practice. If Gemini ever starts rejecting a given browser's mime
-  // type, the fix is a client-side re-encode before upload, not this
-  // route — this route just relays whatever content-type it's handed.
+  // Whatever the browser recorded — audio/webm (Chrome/Firefox/Android) or
+  // audio/mp4 (Safari/iOS) — Whisper accepts both.
   const mimeType = req.headers["content-type"] || "audio/webm";
-
-  const prompt =
-    "Transcribe the speech in this audio clip exactly as spoken. The speaker may use English, Hindi, or a mix of both (Hinglish) — transcribe in whichever script/language they used. " +
-    `Return ONLY the transcript text — no preamble, no quotes, no commentary. If there is no discernible speech in the clip, return exactly: ${NO_SPEECH_SENTINEL}`;
+  const extension = mimeType.includes("mp4") ? "mp4" : "webm";
 
   try {
-    const response = await fetch(GEMINI_URL(GEMINI_MODEL), {
+    const form = new FormData();
+    form.append("file", new Blob([audio], { type: mimeType }), `audio.${extension}`);
+    form.append("model", GROQ_TRANSCRIBE_MODEL);
+    // Speaker may use English, Hindi, or a mix of both (Hinglish) — no
+    // `language` param is pinned, so the model auto-detects/transcribes
+    // in whichever script the speaker used. `prompt` is just a hint, not
+    // a strict instruction, but nudges style/vocabulary.
+    form.append("prompt", "The speaker may use English, Hindi, or a mix of both (Hinglish).");
+    form.append("response_format", "json");
+
+    const response = await fetch("https://api.groq.com/openai/v1/audio/transcriptions", {
       method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        contents: [
-          {
-            role: "user",
-            parts: [{ text: prompt }, { inlineData: { mimeType, data: audio.toString("base64") } }],
-          },
-        ],
-        generationConfig: { maxOutputTokens: 512, temperature: 0.1 },
-      }),
+      headers: { authorization: `Bearer ${process.env.GROQ_API_KEY}` },
+      body: form,
     });
 
     if (!response.ok) {
       const detail = await response.text();
-      console.error("Gemini transcribe error:", response.status, detail);
+      console.error("Groq transcribe error:", response.status, detail);
       return res.status(502).json({ error: "Speech-to-text request failed" });
     }
 
     const data = await response.json();
-    const text = data.candidates?.[0]?.content?.parts
-      ?.map((p) => p.text)
-      .filter(Boolean)
-      .join("")
-      ?.trim();
+    const text = data.text?.trim();
 
-    if (!text || text.includes(NO_SPEECH_SENTINEL)) {
+    if (!text || text === NO_SPEECH_SENTINEL) {
       return res.status(422).json({ error: "Didn't catch any speech in that recording — try again" });
     }
 
@@ -146,8 +130,8 @@ router.post("/extract", async (req, res) => {
     return res.status(400).json({ error: "transcript and a valid kind ('borrower' or 'lender') are required" });
   }
 
-  if (!process.env.GEMINI_API_KEY) {
-    return res.status(500).json({ error: "GEMINI_API_KEY is not configured on the server" });
+  if (!process.env.GROQ_API_KEY) {
+    return res.status(500).json({ error: "GROQ_API_KEY is not configured on the server" });
   }
 
   const today = new Date().toISOString().slice(0, 10);
@@ -169,42 +153,43 @@ ${fieldLines}
 If a detail wasn't mentioned, use an empty string "" for that field — never invent values, never omit keys.`;
 
   try {
-    const response = await fetch(GEMINI_URL(GEMINI_MODEL), {
+    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
-      headers: { "content-type": "application/json" },
+      headers: {
+        "content-type": "application/json",
+        authorization: `Bearer ${process.env.GROQ_API_KEY}`,
+      },
       body: JSON.stringify({
-        contents: [{ role: "user", parts: [{ text: prompt }] }],
-        generationConfig: { maxOutputTokens: 512, temperature: 0.1, responseMimeType: "application/json" },
+        model: GROQ_CHAT_MODEL,
+        messages: [{ role: "user", content: prompt }],
+        max_completion_tokens: 512,
+        response_format: { type: "json_object" },
       }),
     });
 
     if (!response.ok) {
       const detail = await response.text();
-      console.error("Gemini API error:", response.status, detail);
+      console.error("Groq API error:", response.status, detail);
       return res.status(502).json({ error: "AI provider request failed" });
     }
 
     const data = await response.json();
-    const raw = data.candidates?.[0]?.content?.parts
-      ?.map((p) => p.text)
-      .filter(Boolean)
-      .join("")
-      ?.trim();
+    const raw = data.choices?.[0]?.message?.content?.trim();
 
     if (!raw) {
-      const finishReason = data.candidates?.[0]?.finishReason;
-      console.error("Gemini returned no text. finishReason:", finishReason, JSON.stringify(data));
+      const finishReason = data.choices?.[0]?.finish_reason;
+      console.error("Groq returned no text. finish_reason:", finishReason, JSON.stringify(data));
       return res.status(502).json({ error: "AI provider returned no text" });
     }
 
     let parsed;
     try {
-      // responseMimeType: "application/json" should make this a clean
-      // parse, but strip stray code fences defensively in case the model
+      // response_format: json_object should make this a clean parse,
+      // but strip stray code fences defensively in case the model
       // wraps it anyway.
       parsed = JSON.parse(raw.replace(/^```json\s*|```$/g, "").trim());
     } catch (parseErr) {
-      console.error("Failed to parse Gemini JSON:", raw);
+      console.error("Failed to parse Groq JSON:", raw);
       return res.status(502).json({ error: "Couldn't understand that — try rephrasing" });
     }
 

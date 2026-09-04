@@ -39,15 +39,15 @@ app.use("/api/whatif", whatifRouter);
 
 // Voice: POST /api/voice/transcribe (audio -> text) and
 // POST /api/voice/extract (text -> structured form fields). Both via
-// Gemini — see routes/voice.js for details.
+// Groq — see routes/voice.js for details.
 app.use("/api/voice", voiceRouter);
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   console.log(`AI backend running at http://localhost:${PORT}`);
-  if (!process.env.GEMINI_API_KEY) {
+  if (!process.env.GROQ_API_KEY) {
     console.warn(
-      "⚠️  GEMINI_API_KEY is not set — /api/whatif/insight and both /api/voice routes will fail until it's added to backend/.env"
+      "⚠️  GROQ_API_KEY is not set — /api/whatif/insight and both /api/voice routes will fail until it's added to backend/.env"
     );
   }
 });

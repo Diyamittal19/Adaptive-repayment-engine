@@ -10,9 +10,10 @@ const router = Router();
 // button in WhatIf.tsx). We hand the AI the *already-computed* result
 // as grounding, and ask it to explain/advise in plain English —
 // we never ask it to invent the numbers itself.
-// Model is configurable via env (defaults to the fast/cheap Flash tier —
-// plenty for a 3-5 sentence explainer). See backend/.env.example.
-const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-3.6-flash";
+// Model is configurable via env (defaults to a fast open-weight model
+// on Groq's free tier — plenty for a 3-5 sentence explainer). Check
+// console.groq.com/docs/models if this default ever 404s on you.
+const GROQ_MODEL = process.env.GROQ_MODEL || "openai/gpt-oss-20b";
 
 router.post("/insight", async (req, res) => {
   const { mode, inputs, result, borrower, lender } = req.body || {};
@@ -21,8 +22,8 @@ router.post("/insight", async (req, res) => {
     return res.status(400).json({ error: "mode, inputs, and result are required" });
   }
 
-  if (!process.env.GEMINI_API_KEY) {
-    return res.status(500).json({ error: "GEMINI_API_KEY is not configured on the server" });
+  if (!process.env.GROQ_API_KEY) {
+    return res.status(500).json({ error: "GROQ_API_KEY is not configured on the server" });
   }
 
   // Extra context beyond the raw scenario numbers, when the frontend has it
@@ -44,39 +45,45 @@ A user just ran a ${mode === "portfolio" ? "portfolio-wide" : "single borrower"}
 Scenario inputs: ${JSON.stringify(inputs)}
 Computed result (already calculated, treat as ground truth — do not recompute or contradict these numbers): ${JSON.stringify(result)}
 ${contextLines.length ? `\n${contextLines.join("\n")}\n` : ""}
-Write a short (3-5 sentence) plain-English explanation of what this scenario means in practice, and one concrete, actionable recommendation. Use the borrower/lender context above when it's relevant (e.g. repeat floor hits, past hardship requests, trust score) instead of only restating the scenario numbers. No headings, no bullet points, no markdown — plain prose only. Do not restate the raw numbers back verbatim; interpret them.`;
+Write a short (3-5 sentence) plain-English explanation of what this scenario means in practice, and one concrete, actionable recommendation. Use the borrower/lender context above when it's relevant (e.g. repeat floor hits, past hardship requests, trust score) instead of only restating the scenario numbers. No headings, no bullet points, no markdown — plain prose only. Do not restate the raw numbers back verbatim; interpret them.
+IMPORTANT RULES:
+- All monetary values are in Indian Rupees (INR).
+- Always use the ₹ symbol, never the $ symbol.
+- Never convert INR to USD or any other currency.
+- Use Indian-style number formatting when appropriate, such as ₹1,50,000.
+- Give practical, easy-to-understand financial advice.
+
+Provide the response clearly and concisely.`;
 
   try {
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${process.env.GEMINI_API_KEY}`,
-      {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ role: "user", parts: [{ text: prompt }] }],
-          generationConfig: { maxOutputTokens: 1024, temperature: 0.4 },
-        }),
-      }
-    );
+    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        authorization: `Bearer ${process.env.GROQ_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: GROQ_MODEL,
+        messages: [{ role: "user", content: prompt }],
+        max_completion_tokens: 1024,
+      }),
+    });
 
     if (!response.ok) {
       const detail = await response.text();
-      console.error("Gemini API error:", response.status, detail);
+      console.error("Groq API error:", response.status, detail);
       return res.status(502).json({ error: "AI provider request failed" });
     }
 
     const data = await response.json();
-    const insight = data.candidates?.[0]?.content?.parts
-      ?.map((p) => p.text)
-      .filter(Boolean)
-      .join("")
-      ?.trim();
+    const insight = data.choices?.[0]?.message?.content?.trim();
 
     if (!insight) {
-      // Gemini returns candidates without text when it hits a safety block
-      // or the max-token cap mid-thought — surface that distinctly.
-      const finishReason = data.candidates?.[0]?.finishReason;
-      console.error("Gemini returned no text. finishReason:", finishReason, JSON.stringify(data));
+      // Groq returns a choice with empty content when it hits the
+      // token cap mid-thought — surface that distinctly rather than
+      // a generic 500.
+      const finishReason = data.choices?.[0]?.finish_reason;
+      console.error("Groq returned no text. finish_reason:", finishReason, JSON.stringify(data));
       return res.status(502).json({ error: "AI provider returned no text" });
     }
 
