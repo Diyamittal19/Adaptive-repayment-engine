@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import { DEMO_MODE, demoLoan, demoPayments, demoExpenses, demoSavingsBalance, demoGoals, demoOccupation } from "@/lib/demoData";
+import { DEMO_MODE, demoLoan, demoPayments, demoExpenses, demoSavingsBalance, demoSavingsLog, demoIncomeLog, demoGoals, demoOccupation } from "@/lib/demoData";
 import type { LucideIcon } from "lucide-react";
 import {
   Wallet,
@@ -29,6 +29,8 @@ import {
   TrendingDown,
   Minus,
   CalendarClock,
+  History,
+  IndianRupee,
 } from "lucide-react";
 import {
   LineChart,
@@ -118,6 +120,24 @@ interface QuickLogSubmit {
   note: string;
 }
 
+type IncomeFrequency = "daily" | "weekly" | "monthly";
+
+interface IncomeLogEntry {
+  id: number;
+  amount: number;
+  frequency: IncomeFrequency;
+  loggedAt: string;
+}
+
+// Normalizes a logged income entry to a monthly-equivalent figure, since
+// suggestions/charts work in monthly terms regardless of how someone
+// prefers to report their earnings.
+function monthlyEquivalent(entry: IncomeLogEntry): number {
+  if (entry.frequency === "daily") return Math.round(entry.amount * 30);
+  if (entry.frequency === "weekly") return Math.round(entry.amount * 4.33);
+  return entry.amount;
+}
+
 interface QuickLogCardProps {
   title: string;
   subtitle: string;
@@ -147,6 +167,7 @@ interface CustomTooltipProps {
 
 interface ExpenseBreakdownProps {
   expenses: Expense[];
+  saved: number;
 }
 
 interface GoalCardProps {
@@ -189,14 +210,13 @@ const categoryColors: Record<CategoryKey, string> = {
    VOLATILITY-AWARE SAVINGS LOGIC
    ========================================================================= */
 
-function computeSuggestion(history: MonthHistoryItem[]): SavingsSuggestion {
-  const incomes = history.map((c) => c.income);
+function computeSuggestion(incomes: number[]): SavingsSuggestion {
   const avg = incomes.reduce((a, b) => a + b, 0) / incomes.length;
   const variance = incomes.reduce((sum, v) => sum + (v - avg) ** 2, 0) / incomes.length;
   const stdDev = Math.sqrt(variance);
   const volatility = avg > 0 ? stdDev / avg : 0;
 
-  const latest = history[history.length - 1].income;
+  const latest = incomes[incomes.length - 1];
   const isAboveAverage = latest >= avg;
 
   let pct, reason;
@@ -789,10 +809,124 @@ function QuickLogCard({ title, subtitle, icon: Icon, categoryPicker, onSubmit, b
 }
 
 /* =========================================================================
+   LOG INCOME
+   ========================================================================= */
+
+function LogIncomeCard({
+  incomeLog,
+  onSubmit,
+}: {
+  incomeLog: IncomeLogEntry[];
+  onSubmit: (data: { amount: number; frequency: IncomeFrequency }) => void;
+}) {
+  const [amount, setAmount] = useState("");
+  const [frequency, setFrequency] = useState<IncomeFrequency>("monthly");
+  const [showHistory, setShowHistory] = useState(false);
+
+  function handleSubmit() {
+    const value = Number(amount);
+    if (!value || value <= 0) return;
+    onSubmit({ amount: value, frequency });
+    setAmount("");
+  }
+
+  const trail = incomeLog
+    .slice()
+    .sort((a, b) => (a.loggedAt < b.loggedAt ? 1 : -1));
+
+  return (
+    <div className="bg-card rounded-2xl border border-border shadow-sm p-5 sm:p-6">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h3 className="text-foreground font-semibold text-base flex items-center gap-2">
+            <IndianRupee size={18} className="text-teal-700" />
+            Log income
+          </h3>
+          <p className="text-muted-foreground text-sm mt-1">However it comes in — daily, weekly, or monthly</p>
+        </div>
+        <button
+          onClick={() => setShowHistory((s) => !s)}
+          className="shrink-0 flex items-center gap-1.5 text-xs font-medium text-muted-foreground border border-border rounded-lg px-3 py-1.5 hover:bg-secondary transition-colors"
+        >
+          <History size={13} />
+          {showHistory ? "Hide history" : "Income history"}
+        </button>
+      </div>
+
+      <div className="mt-4">
+        <label className="text-xs text-muted-foreground mb-2 block">How often?</label>
+        <div className="flex gap-2">
+          {(["daily", "weekly", "monthly"] as const).map((f) => (
+            <button
+              key={f}
+              onClick={() => setFrequency(f)}
+              className={`flex-1 text-xs font-medium px-3 py-2 rounded-xl border capitalize transition-colors ${
+                frequency === f ? "bg-slate-900 text-white border-slate-900" : "bg-card text-muted-foreground border-border hover:bg-secondary"
+              }`}
+            >
+              {f}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="mt-4 max-w-xs">
+        <label className="text-xs text-muted-foreground">
+          {frequency === "daily" ? "Amount, per day" : frequency === "weekly" ? "Amount, per week" : "Amount, this month"}
+        </label>
+        <div className="relative mt-1">
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">₹</span>
+          <input
+            type="number"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            placeholder="0"
+            className="w-full pl-7 pr-3 py-2.5 rounded-xl border border-border text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-teal-100 focus:border-teal-300"
+          />
+        </div>
+        {(frequency === "daily" || frequency === "weekly") && Number(amount) > 0 && (
+          <p className="text-xs text-muted-foreground mt-1.5">
+            ≈ ₹{monthlyEquivalent({ id: 0, amount: Number(amount), frequency, loggedAt: "" }).toLocaleString("en-IN")} / month
+          </p>
+        )}
+      </div>
+
+      <button
+        onClick={handleSubmit}
+        className="mt-5 flex items-center justify-center gap-2 text-sm font-medium text-white px-5 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 transition-colors"
+      >
+        <IndianRupee size={15} />
+        Log income
+      </button>
+
+      {showHistory && (
+        <div className="mt-5 pt-5 border-t border-border">
+          <p className="text-xs font-medium text-muted-foreground mb-3">All logged income — every frequency</p>
+          <div className="space-y-2 max-h-64 overflow-y-auto">
+            {trail.length === 0 && (
+              <p className="text-sm text-muted-foreground">Nothing logged yet — your first entry will show up here.</p>
+            )}
+            {trail.map((e) => (
+              <div key={e.id} className="flex items-center justify-between text-sm py-2 border-b border-border last:border-0">
+                <span className="text-muted-foreground">
+                  {new Date(e.loggedAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                  <span className="ml-2 text-[10px] font-medium uppercase tracking-wide text-muted-foreground/70">{e.frequency}</span>
+                </span>
+                <span className="text-foreground font-medium">₹{e.amount.toLocaleString("en-IN")}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* =========================================================================
    EXPENSE BREAKDOWN
    ========================================================================= */
 
-function ExpenseBreakdown({ expenses }: ExpenseBreakdownProps) {
+function ExpenseBreakdown({ expenses, saved }: ExpenseBreakdownProps) {
   const total = expenses.reduce((sum, e) => sum + e.amount, 0);
   const byCategory = useMemo(() => {
     const map: Record<CategoryKey, number> = {
@@ -811,13 +945,18 @@ function ExpenseBreakdown({ expenses }: ExpenseBreakdownProps) {
       .sort((a, b) => b.amount - a.amount);
   }, [expenses]);
 
+  // Both bars share the same scale — whichever of total expenses or
+  // total saved is larger sets the 100% mark, so the two are visually
+  // comparable at a glance.
+  const scaleMax = Math.max(total, Math.abs(saved), 1);
+
   return (
     <div className="bg-card rounded-2xl border border-border shadow-sm p-5 sm:p-6">
-      <h3 className="text-foreground font-semibold text-base">This month's expenses</h3>
-      <p className="text-muted-foreground text-sm mt-1">₹{total.toLocaleString("en-IN")} logged so far</p>
+      <h3 className="text-foreground font-semibold text-base">This month, at a glance</h3>
+      <p className="text-muted-foreground text-sm mt-1">₹{total.toLocaleString("en-IN")} spent · ₹{saved.toLocaleString("en-IN")} saved so far</p>
       <div className="space-y-4 mt-5">
         {byCategory.map((c) => {
-          const pct = total > 0 ? Math.round((c.amount / total) * 100) : 0;
+          const pct = Math.round((c.amount / scaleMax) * 100);
           return (
             <div key={c.key}>
               <div className="flex items-center justify-between text-sm mb-1.5">
@@ -830,6 +969,18 @@ function ExpenseBreakdown({ expenses }: ExpenseBreakdownProps) {
             </div>
           );
         })}
+        <div>
+          <div className="flex items-center justify-between text-sm mb-1.5">
+            <span className="text-foreground">Saved</span>
+            <span className="text-foreground font-medium">₹{saved.toLocaleString("en-IN")}</span>
+          </div>
+          <div className="h-2 rounded-full bg-secondary overflow-hidden">
+            <div
+              className="h-full rounded-full bg-teal-600"
+              style={{ width: `${Math.max(0, Math.round((saved / scaleMax) * 100))}%` }}
+            />
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -959,6 +1110,9 @@ export default function Tracker() {
   const [payments, setPayments] = useState<{ cycle_month: string; income_that_cycle: number; amount_paid: number }[]>([]);
   const [expenses, setExpenses] = useState<DbExpense[]>([]);
   const [savingsBalance, setSavingsBalance] = useState(0);
+  const [savingsLog, setSavingsLog] = useState<{ amount: number; date: string }[]>([]);
+  const [incomeLog, setIncomeLog] = useState<IncomeLogEntry[]>([]);
+  const [justSaved, setJustSaved] = useState(false);
   const [goals, setGoals] = useState<DbGoal[]>([]);
   const [showAllSuggestions, setShowAllSuggestions] = useState(false);
 
@@ -974,6 +1128,8 @@ export default function Tracker() {
         setExpenses(demoExpenses);
         setGoals(demoGoals);
         setSavingsBalance(demoSavingsBalance);
+        setSavingsLog(demoSavingsLog);
+        setIncomeLog(demoIncomeLog);
         setLoading(false);
         return;
       }
@@ -989,7 +1145,7 @@ export default function Tracker() {
         .limit(1)
         .maybeSingle();
 
-      const [{ data: paymentRows }, { data: expenseRows }, { data: goalRows }, { data: savingsRows }] = await Promise.all([
+      const [{ data: paymentRows }, { data: expenseRows }, { data: goalRows }, { data: savingsRows }, { data: incomeRows }] = await Promise.all([
         loan
           ? supabase
               .from("payments")
@@ -1009,8 +1165,14 @@ export default function Tracker() {
           .order("created_at", { ascending: true }),
         supabase
           .from("savings_transactions")
-          .select("amount")
-          .eq("borrower_id", user.id),
+          .select("amount, created_at")
+          .eq("borrower_id", user.id)
+          .order("created_at", { ascending: true }),
+        supabase
+          .from("income_log")
+          .select("id, amount, frequency, logged_at")
+          .eq("borrower_id", user.id)
+          .order("logged_at", { ascending: true }),
       ]);
 
       if (!active) return;
@@ -1019,6 +1181,8 @@ export default function Tracker() {
       setExpenses((expenseRows ?? []).map((e) => ({ ...e, note: e.note ?? "" })));
       setGoals(goalRows ?? []);
       setSavingsBalance((savingsRows ?? []).reduce((sum, r) => sum + r.amount, 0));
+      setSavingsLog((savingsRows ?? []).map((r) => ({ amount: r.amount, date: r.created_at })));
+      setIncomeLog((incomeRows ?? []).map((r) => ({ id: r.id, amount: r.amount, frequency: r.frequency, loggedAt: r.logged_at })));
       setLoading(false);
     }
 
@@ -1027,9 +1191,10 @@ export default function Tracker() {
   }, []);
 
   // Monthly income comes from real payment cycles; monthly spend comes
-  // from real logged expenses. Merged by calendar month so the trend
-  // chart reflects both sources even if one has more history than the
-  // other.
+  // from real logged expenses; monthly "saved" comes from actual logged
+  // savings deposits/withdrawals (savingsLog) — not a derived leftover
+  // figure, so the chart reflects the same numbers as the "Total saved"
+  // card and updates immediately when savings are logged or used.
   const monthHistory: MonthHistoryItem[] = useMemo(() => {
     const map = new Map<string, MonthHistoryItem>();
     for (const p of payments) {
@@ -1038,7 +1203,6 @@ export default function Tracker() {
       const label = d.toLocaleDateString("en-IN", { month: "short" });
       const existing = map.get(key) ?? { month: label, income: 0, expenses: 0, saved: 0 };
       existing.income += p.income_that_cycle;
-      existing.saved -= p.amount_paid; // loan payment reduces what's left over
       map.set(key, existing);
     }
     for (const e of expenses) {
@@ -1047,15 +1211,50 @@ export default function Tracker() {
       const label = d.toLocaleDateString("en-IN", { month: "short" });
       const existing = map.get(key) ?? { month: label, income: 0, expenses: 0, saved: 0 };
       existing.expenses += e.amount;
-      existing.saved -= e.amount;
+      map.set(key, existing);
+    }
+    for (const s of savingsLog) {
+      const d = new Date(s.date);
+      const key = monthKey(d);
+      const label = d.toLocaleDateString("en-IN", { month: "short" });
+      const existing = map.get(key) ?? { month: label, income: 0, expenses: 0, saved: 0 };
+      existing.saved += s.amount;
       map.set(key, existing);
     }
     return Array.from(map.entries())
       .sort(([a], [b]) => (a > b ? 1 : -1))
-      .map(([, v]) => ({ ...v, saved: v.income + v.saved }));
-  }, [payments, expenses]);
+      .map(([, v]) => v);
+  }, [payments, expenses, savingsLog]);
 
-  const monthIncome = monthHistory.length ? monthHistory[monthHistory.length - 1].income : 0;
+  // Income specifically comes only from real payment cycles — unlike
+  // monthHistory above (used for the chart), this never picks up an
+  // empty "today" bucket just because an expense or savings entry was
+  // logged on a day with no payment cycle yet. That was causing "this
+  // month's income" and the savings suggestion to read as ₹0 right
+  // after logging something.
+  // Combines two income sources by month: `payments` (loan-cycle records —
+  // nothing in this app currently writes to these, but keeping it means
+  // existing/lender-provided cycle data still counts) and `incomeLog`
+  // (self-reported via "Log income" below, normalized to a monthly
+  // figure). If a future write path ever populates `payments` for the
+  // same month a borrower also self-logs income, this would double-count
+  // that month — worth reconciling if/when that write path is built.
+  const incomeHistory = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const p of payments) {
+      const key = monthKey(new Date(p.cycle_month));
+      map.set(key, (map.get(key) ?? 0) + p.income_that_cycle);
+    }
+    for (const e of incomeLog) {
+      const key = monthKey(new Date(e.loggedAt));
+      map.set(key, (map.get(key) ?? 0) + monthlyEquivalent(e));
+    }
+    return Array.from(map.entries())
+      .sort(([a], [b]) => (a > b ? 1 : -1))
+      .map(([, income]) => income);
+  }, [payments, incomeLog]);
+
+  const monthIncome = incomeHistory.length ? incomeHistory[incomeHistory.length - 1] : 0;
   const avgDailySpend = monthHistory.length
     ? Math.round(monthHistory.reduce((sum, c) => sum + c.expenses, 0) / monthHistory.length / 7)
     : 0;
@@ -1070,13 +1269,19 @@ export default function Tracker() {
   });
 
   const totalExpenses = thisMonthExpenses.reduce((sum, e) => sum + e.amount, 0);
+  const thisMonthSaved = savingsLog
+    .filter((s) => {
+      const d = new Date(s.date);
+      return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+    })
+    .reduce((sum, s) => sum + s.amount, 0);
   const leftOver = monthIncome - totalExpenses;
-  const suggestion = monthHistory.length
-    ? computeSuggestion(monthHistory)
+  const suggestion = incomeHistory.length
+    ? computeSuggestion(incomeHistory)
     : { pct: 0, reason: "Log a few cycles of income and expenses to get a personalized suggestion.", amount: 0, volatility: 0 };
   const daysCovered = avgDailySpend > 0 ? Math.round(savingsBalance / avgDailySpend) : 0;
-  const avgIncome = monthHistory.length
-    ? Math.round(monthHistory.reduce((s, c) => s + c.income, 0) / monthHistory.length)
+  const avgIncome = incomeHistory.length
+    ? Math.round(incomeHistory.reduce((s, c) => s + c, 0) / incomeHistory.length)
     : 0;
 
   const productSuggestions = computeProductSuggestions({
@@ -1101,26 +1306,61 @@ export default function Tracker() {
       setExpenses((prev) => [{ ...data, note: data.note ?? "" }, ...prev]);
     }
   }
-  async function handleSave(amount: number) {
+  async function handleLogIncome({ amount, frequency }: { amount: number; frequency: IncomeFrequency }) {
     if (!userId) return;
+    const today = new Date().toISOString().slice(0, 10);
     if (DEMO_MODE) {
-      setSavingsBalance((prev) => prev + amount);
+      setIncomeLog((prev) => [...prev, { id: Date.now(), amount, frequency, loggedAt: today }]);
       return;
     }
-    const { error } = await supabase.from("savings_transactions").insert({ borrower_id: userId, amount });
-    if (!error) setSavingsBalance((prev) => prev + amount);
+    const { data, error } = await supabase
+      .from("income_log")
+      .insert({ borrower_id: userId, amount, frequency, logged_at: today })
+      .select("id, amount, frequency, logged_at")
+      .single();
+    if (!error && data) {
+      setIncomeLog((prev) => [...prev, { id: data.id, amount: data.amount, frequency: data.frequency, loggedAt: data.logged_at }]);
+    }
+  }
+
+  async function handleSave(amount: number) {
+    if (!userId) return;
+    const today = new Date().toISOString().slice(0, 10);
+    if (DEMO_MODE) {
+      setSavingsBalance((prev) => prev + amount);
+      setSavingsLog((prev) => [...prev, { amount, date: today }]);
+      return;
+    }
+    const { data, error } = await supabase
+      .from("savings_transactions")
+      .insert({ borrower_id: userId, amount })
+      .select("amount, created_at")
+      .single();
+    if (!error && data) {
+      setSavingsBalance((prev) => prev + amount);
+      setSavingsLog((prev) => [...prev, { amount: data.amount, date: data.created_at }]);
+    }
   }
   function handleLogSavings({ amount }: QuickLogSubmit) {
     handleSave(amount);
   }
   async function handleUseSavings({ amount }: QuickLogSubmit) {
     if (!userId) return;
+    const today = new Date().toISOString().slice(0, 10);
     if (DEMO_MODE) {
       setSavingsBalance((prev) => Math.max(0, prev - amount));
+      setSavingsLog((prev) => [...prev, { amount: -amount, date: today }]);
       return;
     }
-    const { error } = await supabase.from("savings_transactions").insert({ borrower_id: userId, amount: -amount });
-    if (!error) setSavingsBalance((prev) => Math.max(0, prev - amount));
+    const { data, error } = await supabase
+      .from("savings_transactions")
+      .insert({ borrower_id: userId, amount: -amount })
+      .select("amount, created_at")
+      .single();
+    if (!error && data) {
+      setSavingsBalance((prev) => Math.max(0, prev - amount));
+      setSavingsLog((prev) => [...prev, { amount: data.amount, date: data.created_at }]);
+    }
   }
   async function handleAddGoal(goal: Goal) {
     if (!userId) return;
@@ -1224,13 +1464,23 @@ export default function Tracker() {
 
             <p className="text-muted-foreground text-xs mt-3">You have about ₹{leftOver.toLocaleString("en-IN")} left over this month</p>
 
-            <button
-              onClick={() => handleSave(suggestion.amount)}
-              className="mt-4 flex items-center justify-center gap-2 text-sm font-medium text-white px-5 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 transition-colors"
-            >
-              <Wallet size={15} />
-              Mark ₹{suggestion.amount.toLocaleString("en-IN")} as saved
-            </button>
+            {justSaved ? (
+              <div className="mt-4 flex items-center gap-2 rounded-xl bg-teal-50 px-4 py-2.5 text-sm font-medium text-teal-800">
+                <BadgeCheck size={16} />
+                Done! You've saved ₹{thisMonthSaved.toLocaleString("en-IN")} this month.
+              </div>
+            ) : (
+              <button
+                onClick={() => {
+                  handleSave(suggestion.amount);
+                  setJustSaved(true);
+                }}
+                className="mt-4 flex items-center justify-center gap-2 text-sm font-medium text-white px-5 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 transition-colors"
+              >
+                <Wallet size={15} />
+                Mark ₹{suggestion.amount.toLocaleString("en-IN")} as saved
+              </button>
+            )}
           </div>
 
           <div>
@@ -1261,6 +1511,7 @@ export default function Tracker() {
 
       {tab === "log" && (
         <div className="space-y-6">
+          <LogIncomeCard incomeLog={incomeLog} onSubmit={handleLogIncome} />
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
             <QuickLogCard
               title="Log an expense"
@@ -1287,7 +1538,7 @@ export default function Tracker() {
               onSubmit={handleUseSavings}
             />
           </div>
-          <ExpenseBreakdown expenses={thisMonthExpenses} />
+          <ExpenseBreakdown expenses={thisMonthExpenses} saved={thisMonthSaved} />
         </div>
       )}
 
