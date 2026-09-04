@@ -2,14 +2,8 @@ import { useEffect, useState } from "react";
 import jsPDF from "jspdf";
 import { getBorrowerPassportById, bandTone, type CreditPassport } from "@/lib/creditPassport";
 import { supabase } from "@/lib/supabaseClient";
-<<<<<<< HEAD
-import BorrowerPassportModal from "@/components/passport/BorrowerPassportModal";
-import VoiceButton from "@/components/voice/VoiceButton";
-import { extractFormFields } from "@/lib/voice";
-=======
 import { DEMO_MODE, demoLenderManualLedgers, demoPayments, demoPlatformBorrowers } from "@/lib/demoData";
 import BorrowerPassportModal from "@/components/passport/BorrowerPassportModal";
->>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
 
 // ── Types ──────────────────────────────────────────────────────────────────
 type TxType = "loan" | "repayment" | "interest";
@@ -249,15 +243,12 @@ function ManualLedger() {
       if (!user || !active) return;
       setUserId(user.id);
 
-<<<<<<< HEAD
-=======
       if (DEMO_MODE) {
         setBorrowers(demoLenderManualLedgers);
         setLoading(false);
         return;
       }
 
->>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
       const { data } = await supabase
         .from("lender_manual_ledgers")
         .select("*, lender_manual_ledger_transactions(*)")
@@ -276,19 +267,6 @@ function ManualLedger() {
   const emptyForm = { name: "", phone: "", email: "", address: "", loanAmount: "", interestRate: "", startDate: "", dueDate: "", note: "", status: "active" as BorrowerStatus, initialNote: "" };
   const [form, setForm] = useState(emptyForm);
 
-<<<<<<< HEAD
-  // Voice fill: record -> Gemini transcribes it -> Gemini extracts fields ->
-  // merged into the form above. User still reviews/edits before submitting.
-  const [voiceNote, setVoiceNote] = useState<string | null>(null);
-  async function handleVoiceFillBorrower(transcript: string) {
-    setVoiceNote(null);
-    const fields = await extractFormFields(transcript, "borrower");
-    setForm((f) => ({ ...f, ...fields }));
-    setVoiceNote(`Filled from: "${transcript}" — review before adding.`);
-  }
-
-=======
->>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
   // Add transaction form
   const [txForm, setTxForm] = useState({ date: new Date().toISOString().slice(0, 10), type: "repayment" as TxType, amount: "", note: "" });
 
@@ -361,10 +339,6 @@ function ManualLedger() {
     const nb = mapBorrowerRow({ ...ledgerRow, lender_manual_ledger_transactions: txRow ? [txRow] : [] });
     setBorrowers(prev => [nb, ...prev]);
     setForm(emptyForm);
-<<<<<<< HEAD
-    setVoiceNote(null);
-=======
->>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
     setModal(null);
   }
 
@@ -535,17 +509,10 @@ function ManualLedger() {
                     if (!passport) return <span className="text-xs text-muted-foreground">—</span>;
                     const tone = bandTone(passport.band);
                     const toneClass: Record<string, string> = {
-<<<<<<< HEAD
-                      success: "bg-success/10 text-success-foreground",
-                      info: "bg-info/10 text-info-foreground",
-                      warning: "bg-warning/10 text-warning-foreground",
-                      danger: "bg-destructive/10 text-destructive",
-=======
                       success: "bg-success text-success-foreground",
                       info: "bg-info text-info-foreground",
                       warning: "bg-warning text-warning-foreground",
                       danger: "bg-destructive text-destructive",
->>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
                     };
                     return (
                       <button
@@ -624,17 +591,10 @@ function ManualLedger() {
             if (!passport) return null;
             const tone = bandTone(passport.band);
             const toneClass: Record<string, string> = {
-<<<<<<< HEAD
-              success: "bg-success/10 text-success-foreground",
-              info: "bg-info/10 text-info-foreground",
-              warning: "bg-warning/10 text-warning-foreground",
-              danger: "bg-destructive/10 text-destructive",
-=======
               success: "bg-success text-success-foreground",
               info: "bg-info text-info-foreground",
               warning: "bg-warning/10 text-warning-foreground",
               danger: "bg-destructive text-destructive",
->>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
             };
             return (
               <div className="rounded-xl border border-border p-4 flex items-center justify-between gap-4 flex-wrap">
@@ -721,25 +681,6 @@ function ManualLedger() {
   const addBorrowerModal = modal === "addBorrower" && (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/20 backdrop-blur-sm p-4">
       <div className="bg-card w-full max-w-xl rounded-2xl shadow-2xl border border-border overflow-hidden max-h-[90vh] flex flex-col">
-<<<<<<< HEAD
-        <div className="flex items-center justify-between px-6 py-5 border-b border-border gap-3">
-          <div>
-            <h2 className="font-display font-semibold text-lg text-foreground">Add Borrower Manually</h2>
-            <p className="text-xs text-muted-foreground mt-0.5">Enter contact and full loan amount details, or fill it by speaking</p>
-          </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <VoiceButton
-              label="Fill by voice"
-              busyLabel="Understanding…"
-              onTranscript={handleVoiceFillBorrower}
-            />
-            <button onClick={() => setModal(null)} className="w-9 h-9 flex items-center justify-center rounded-xl border border-border text-muted-foreground hover:bg-secondary transition-colors">✕</button>
-          </div>
-        </div>
-        {voiceNote && (
-          <p className="px-6 pt-3 text-xs text-muted-foreground italic">{voiceNote}</p>
-        )}
-=======
         <div className="flex items-center justify-between px-6 py-5 border-b border-border">
           <div>
             <h2 className="font-display font-semibold text-lg text-foreground">Add Borrower Manually</h2>
@@ -747,7 +688,6 @@ function ManualLedger() {
           </div>
           <button onClick={() => setModal(null)} className="w-9 h-9 flex items-center justify-center rounded-xl border border-border text-muted-foreground hover:bg-secondary transition-colors">✕</button>
         </div>
->>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
 
         <form onSubmit={handleAddBorrower} className="overflow-y-auto flex-1 p-6 space-y-6">
           {/* Contact */}
@@ -868,23 +808,15 @@ function ManualLedger() {
 
 type PlatformLoanRow = {
   id: number;
-<<<<<<< HEAD
-  borrowerName: string;
-=======
   borrowerId: string;
   borrowerName: string;
   borrowerPhone: string;
->>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
   targetAmount: number;
   floor: number;
   ceiling: number;
   outstanding: number;
   dueDate: string;
-<<<<<<< HEAD
-  status: string;
-=======
   status: BorrowerStatus;
->>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
 };
 
 type PlatformPaymentRow = {
@@ -897,16 +829,11 @@ type PlatformPaymentRow = {
 function PlatformBorrowerDetail({ loan, onClose }: { loan: PlatformLoanRow; onClose: () => void }) {
   const [loading, setLoading] = useState(true);
   const [payments, setPayments] = useState<PlatformPaymentRow[]>([]);
-<<<<<<< HEAD
-=======
   const [passportView, setPassportView] = useState<CreditPassport | null>(null);
->>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
 
   useEffect(() => {
     let active = true;
     async function load() {
-<<<<<<< HEAD
-=======
       if (DEMO_MODE) {
         setPayments(
           demoPayments.map((p) => ({
@@ -920,7 +847,6 @@ function PlatformBorrowerDetail({ loan, onClose }: { loan: PlatformLoanRow; onCl
         return;
       }
 
->>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
       const { data } = await supabase
         .from("payments")
         .select("cycle_month, amount_due, amount_paid, paid_on_time")
@@ -941,53 +867,6 @@ function PlatformBorrowerDetail({ loan, onClose }: { loan: PlatformLoanRow; onCl
     return () => { active = false; };
   }, [loan.id]);
 
-<<<<<<< HEAD
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-slate-900/50" onClick={onClose} />
-      <div className="relative bg-card rounded-2xl w-full max-w-lg shadow-xl z-10 p-5 sm:p-6 max-h-[85vh] overflow-y-auto">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h3 className="text-foreground font-semibold">{loan.borrowerName}</h3>
-            <p className="text-muted-foreground text-xs mt-0.5">Payment history</p>
-          </div>
-          <button onClick={onClose} className="text-muted-foreground hover:text-foreground" aria-label="Close">
-            ✕
-          </button>
-        </div>
-
-        {loading ? (
-          <p className="text-sm text-muted-foreground text-center py-8">Loading…</p>
-        ) : payments.length === 0 ? (
-          <p className="text-sm text-muted-foreground text-center py-8">No payment cycles recorded yet.</p>
-        ) : (
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border">
-                <th className="text-left py-2 text-xs font-semibold text-muted-foreground">Cycle</th>
-                <th className="text-left py-2 text-xs font-semibold text-muted-foreground">Due</th>
-                <th className="text-left py-2 text-xs font-semibold text-muted-foreground">Paid</th>
-                <th className="text-left py-2 text-xs font-semibold text-muted-foreground">On time</th>
-              </tr>
-            </thead>
-            <tbody>
-              {payments.map((p, i) => (
-                <tr key={i} className="border-b border-border last:border-0">
-                  <td className="py-2.5 text-foreground">{new Date(p.cycleMonth).toLocaleDateString("en-IN", { month: "short", year: "numeric" })}</td>
-                  <td className="py-2.5 text-foreground">{formatINR(p.amountDue)}</td>
-                  <td className="py-2.5 text-foreground">{formatINR(p.amountPaid)}</td>
-                  <td className="py-2.5">
-                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${p.paidOnTime ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}>
-                      {p.paidOnTime ? "Yes" : "No"}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
-=======
   const totalPaid = payments.reduce((sum, p) => sum + p.amountPaid, 0);
 
   return (
@@ -1109,7 +988,6 @@ function PlatformBorrowerDetail({ loan, onClose }: { loan: PlatformLoanRow; onCl
         </div>
       </div>
       {passportView && <BorrowerPassportModal passport={passportView} onClose={() => setPassportView(null)} />}
->>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
     </div>
   );
 }
@@ -1117,13 +995,9 @@ function PlatformBorrowerDetail({ loan, onClose }: { loan: PlatformLoanRow; onCl
 function PlatformBorrowers() {
   const [loading, setLoading] = useState(true);
   const [loans, setLoans] = useState<PlatformLoanRow[]>([]);
-<<<<<<< HEAD
-  const [detailLoan, setDetailLoan] = useState<PlatformLoanRow | null>(null);
-=======
   const [tab, setTab] = useState<"active" | "past">("active");
   const [search, setSearch] = useState("");
   const [selectedId, setSelectedId] = useState<number | null>(null);
->>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
 
   useEffect(() => {
     let active = true;
@@ -1131,8 +1005,6 @@ function PlatformBorrowers() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user || !active) return;
 
-<<<<<<< HEAD
-=======
       if (DEMO_MODE) {
         setLoans(
           demoPlatformBorrowers.map((l) => ({
@@ -1152,7 +1024,6 @@ function PlatformBorrowers() {
         return;
       }
 
->>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
       const { data: loanRows } = await supabase
         .from("loans")
         .select("id, borrower_id, target_amount, floor, ceiling, outstanding, due_date, status")
@@ -1163,15 +1034,6 @@ function PlatformBorrowers() {
         return;
       }
 
-<<<<<<< HEAD
-      const { data: profiles } = await supabase
-        .from("profiles")
-        .select("id, name")
-        .in("id", [...new Set(loanRows.map((l) => l.borrower_id))]);
-
-      if (!active) return;
-      const nameById = new Map((profiles ?? []).map((p) => [p.id, p.name]));
-=======
       const borrowerIds = [...new Set(loanRows.map((l) => l.borrower_id))];
       const [{ data: profiles }, { data: borrowerProfiles }] = await Promise.all([
         supabase.from("profiles").select("id, name").in("id", borrowerIds),
@@ -1181,28 +1043,19 @@ function PlatformBorrowers() {
       if (!active) return;
       const nameById = new Map((profiles ?? []).map((p) => [p.id, p.name]));
       const phoneById = new Map((borrowerProfiles ?? []).map((b) => [b.borrower_id, b.phone]));
->>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
 
       setLoans(
         loanRows.map((l) => ({
           id: l.id,
-<<<<<<< HEAD
-          borrowerName: nameById.get(l.borrower_id) ?? "Unknown borrower",
-=======
           borrowerId: l.borrower_id,
           borrowerName: nameById.get(l.borrower_id) ?? "Unknown borrower",
           borrowerPhone: phoneById.get(l.borrower_id) ?? "",
->>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
           targetAmount: l.target_amount,
           floor: l.floor,
           ceiling: l.ceiling,
           outstanding: Number(l.outstanding),
           dueDate: l.due_date,
-<<<<<<< HEAD
-          status: l.status,
-=======
           status: l.status as BorrowerStatus,
->>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
         }))
       );
       setLoading(false);
@@ -1211,8 +1064,6 @@ function PlatformBorrowers() {
     return () => { active = false; };
   }, []);
 
-<<<<<<< HEAD
-=======
   const activeL = loans.filter((l) => l.status === "active" || l.status === "overdue");
   const pastL = loans.filter((l) => l.status !== "active" && l.status !== "overdue");
   const list = tab === "active" ? activeL : pastL;
@@ -1222,16 +1073,11 @@ function PlatformBorrowers() {
   const writtenOff = pastL.filter((l) => l.status === "written-off").length;
   const eligibleReB = pastL.filter((l) => l.status === "paid" || l.status === "settled-early").length;
 
->>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
   if (loading) {
     return (
       <main className="flex-1 overflow-y-auto p-8">
         <div className="flex h-64 items-center justify-center">
-<<<<<<< HEAD
-          <p className="text-sm text-muted-foreground">Loading…</p>
-=======
           <p className="text-sm text-muted-foreground">Loading&hellip;</p>
->>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
         </div>
       </main>
     );
@@ -1249,52 +1095,6 @@ function PlatformBorrowers() {
 
   return (
     <main className="flex-1 overflow-y-auto p-8">
-<<<<<<< HEAD
-      <div className="mb-6">
-        <h1 className="font-display text-4xl font-bold text-foreground">Borrowers</h1>
-        <p className="text-muted-foreground mt-1.5 text-sm max-w-xl">
-          {loans.length} registered borrower{loans.length === 1 ? "" : "s"} — real platform loans, structured and repaid through the app.
-        </p>
-      </div>
-      <div className="space-y-4">
-        {loans.map((loan) => (
-          <div key={loan.id} className="bg-card rounded-2xl border border-border p-5 sm:p-6">
-            <div className="flex items-start justify-between gap-4 flex-wrap">
-              <div>
-                <p className="font-semibold text-foreground">{loan.borrowerName}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">Registered platform loan</p>
-              </div>
-              <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 capitalize">{loan.status}</span>
-            </div>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-4 text-sm">
-              <div>
-                <p className="text-muted-foreground text-xs">Target payment</p>
-                <p className="text-foreground font-medium mt-0.5">{formatINR(loan.targetAmount)}</p>
-              </div>
-              <div>
-                <p className="text-muted-foreground text-xs">Outstanding</p>
-                <p className="text-foreground font-medium mt-0.5">{formatINR(loan.outstanding)}</p>
-              </div>
-              <div>
-                <p className="text-muted-foreground text-xs">Floor / Ceiling</p>
-                <p className="text-foreground font-medium mt-0.5">{formatINR(loan.floor)} &ndash; {formatINR(loan.ceiling)}</p>
-              </div>
-              <div>
-                <p className="text-muted-foreground text-xs">Due date</p>
-                <p className="text-foreground font-medium mt-0.5">{new Date(loan.dueDate).toLocaleDateString("en-IN", { month: "short", day: "numeric", year: "numeric" })}</p>
-              </div>
-            </div>
-            <button
-              onClick={() => setDetailLoan(loan)}
-              className="mt-4 text-xs font-medium text-foreground border border-border rounded-lg px-3 py-1.5 hover:bg-secondary transition-colors"
-            >
-              View payment history
-            </button>
-          </div>
-        ))}
-      </div>
-      {detailLoan && <PlatformBorrowerDetail loan={detailLoan} onClose={() => setDetailLoan(null)} />}
-=======
       <div className="mb-2">
         <h1 className="font-display text-4xl font-bold text-foreground">Borrowers</h1>
         <p className="text-muted-foreground mt-1.5 text-sm max-w-xl">
@@ -1386,7 +1186,6 @@ function PlatformBorrowers() {
       </div>
 
       {selected && <PlatformBorrowerDetail loan={selected} onClose={() => setSelectedId(null)} />}
->>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
     </main>
   );
 }
