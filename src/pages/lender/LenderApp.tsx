@@ -37,11 +37,7 @@ export default function LenderApp() {
   const currentLabel = showSettings ? "Settings" : activeNav
 
   return (
-<<<<<<< HEAD
-    <div className="flex h-screen overflow-hidden bg-[#F8FAFC]">
-=======
     <div className="flex h-screen overflow-hidden bg-background">
->>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
       {/* Desktop sidebar */}
       <aside className="hidden md:flex flex-col h-full flex-shrink-0" style={{ width: 256 }}>
         <Sidebar
@@ -72,19 +68,11 @@ export default function LenderApp() {
       {/* Main content */}
       <main className="flex-1 overflow-y-auto">
         {/* Mobile top bar */}
-<<<<<<< HEAD
-        <div className="md:hidden flex items-center gap-3 px-5 py-4 border-b border-slate-200 bg-white sticky top-0 z-40">
-          <button onClick={() => setDrawerOpen((o) => !o)} className="text-slate-700">
-            <Menu size={20} />
-          </button>
-          <span className="font-semibold text-slate-900">Adaptive Repayment</span>
-=======
         <div className="md:hidden flex items-center gap-3 px-5 py-4 border-b border-border bg-card sticky top-0 z-40">
           <button onClick={() => setDrawerOpen((o) => !o)} className="text-foreground">
             <Menu size={20} />
           </button>
           <span className="font-semibold text-foreground">Adaptive Repayment</span>
->>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
         </div>
 
         {currentLabel === "Settings" && <Settings />}

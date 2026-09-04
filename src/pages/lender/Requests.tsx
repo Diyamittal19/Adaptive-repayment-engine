@@ -12,10 +12,7 @@ import {
 import { getBorrowerPassportByName, passportFromApplication, bandTone, type CreditPassport } from "@/lib/creditPassport"
 import BorrowerPassportModal from "@/components/passport/BorrowerPassportModal"
 import { supabase } from "@/lib/supabaseClient"
-<<<<<<< HEAD
-=======
 import { DEMO_MODE, demoApplications, demoHardshipRequests } from "@/lib/demoData"
->>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
 import { logAuditEvent } from "@/lib/auditLog"
 
 /* =========================================================================
@@ -43,10 +40,7 @@ interface Application {
   tenure: string
   status: ApplicationStatus
   offers: Offer[]
-<<<<<<< HEAD
-=======
   interestRate: number | null
->>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
 }
 
 function formatINR(n: number) {
@@ -185,15 +179,12 @@ function NewApplications() {
       if (!user || !active) return
       setUserId(user.id)
 
-<<<<<<< HEAD
-=======
       if (DEMO_MODE) {
         setApplications(demoApplications)
         setLoading(false)
         return
       }
 
->>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
       const { data: apps } = await supabase
         .from("loan_applications")
         .select("*")
@@ -227,10 +218,7 @@ function NewApplications() {
         purpose: a.purpose ?? "",
         tenure: a.tenure ?? "",
         status: a.status,
-<<<<<<< HEAD
-=======
         interestRate: a.interest_rate ?? null,
->>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
         offers: (offerRows ?? [])
           .filter((o) => o.application_id === a.id)
           .map((o) => ({
@@ -258,16 +246,6 @@ function NewApplications() {
 
   const visible = applications.filter((a) => a.status === activeTab)
 
-<<<<<<< HEAD
-  async function updateStatus(id: number, status: ApplicationStatus, amount?: number) {
-    const patch: Record<string, unknown> = { status }
-    if (amount !== undefined) patch.amount = amount
-    const { error } = await supabase.from("loan_applications").update(patch).eq("id", id)
-    if (!error) {
-      setApplications((prev) => prev.map((a) => (a.id === id ? { ...a, status, ...(amount !== undefined ? { requestedAmount: amount } : {}) } : a)))
-      if (userId && (status === "Approved" || status === "Rejected")) {
-        const app = applications.find((a) => a.id === id)
-=======
   const [approvingId, setApprovingId] = useState<number | null>(null)
   const [approveAmount, setApproveAmount] = useState(0)
   const [rateInput, setRateInput] = useState("")
@@ -292,7 +270,6 @@ function NewApplications() {
         )
       )
       if (userId && (status === "Approved" || status === "Rejected")) {
->>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
         await logAuditEvent({
           lenderId: userId,
           actorId: userId,
@@ -304,8 +281,6 @@ function NewApplications() {
     }
   }
 
-<<<<<<< HEAD
-=======
   function startApproval(id: number, amount: number) {
     setApprovingId(id)
     setApproveAmount(amount)
@@ -320,7 +295,6 @@ function NewApplications() {
     setApprovingId(null)
   }
 
->>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
   async function handleRespond(id: number, action: RespondAction, amount?: number, note?: string) {
     if (action === "reject") {
       await updateStatus(id, "Rejected")
@@ -330,33 +304,21 @@ function NewApplications() {
     if (action === "accept") {
       const app = applications.find((a) => a.id === id)
       const lastBorrowerOffer = app ? [...app.offers].reverse().find((o) => o.from === "borrower") : null
-<<<<<<< HEAD
-      await updateStatus(id, "Approved", lastBorrowerOffer?.amount)
-      setNegotiatingId(null)
-=======
       startApproval(id, lastBorrowerOffer?.amount ?? app?.requestedAmount ?? 0)
->>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
       return
     }
     // counter
     if (!userId || amount === undefined) return
-<<<<<<< HEAD
-=======
     const app = applications.find((a) => a.id === id)
->>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
     const { data: offerRow, error } = await supabase
       .from("loan_application_offers")
       .insert({ application_id: id, from_role: "lender", amount, note: note ?? "Countered" })
       .select()
       .single()
     if (error || !offerRow) return
-<<<<<<< HEAD
-    await supabase.from("loan_applications").update({ status: "Negotiating" }).eq("id", id)
-=======
     const patch: Record<string, unknown> = { status: "Negotiating" }
     if (app && app.status === "Pending") patch.responded_at = new Date().toISOString()
     await supabase.from("loan_applications").update(patch).eq("id", id)
->>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
     setApplications((prev) =>
       prev.map((a) =>
         a.id === id
@@ -368,10 +330,6 @@ function NewApplications() {
           : a
       )
     )
-<<<<<<< HEAD
-    const app = applications.find((a) => a.id === id)
-=======
->>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
     await logAuditEvent({
       lenderId: userId,
       actorId: userId,
@@ -468,11 +426,7 @@ function NewApplications() {
               {(a.status === "Pending" || a.status === "Negotiating") && (
                 <div className="flex items-center gap-3 mt-5 flex-wrap">
                   <button
-<<<<<<< HEAD
-                    onClick={() => updateStatus(a.id, "Approved")}
-=======
                     onClick={() => startApproval(a.id, a.requestedAmount)}
->>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
                     className="flex items-center gap-1.5 text-sm font-medium text-white px-4 py-2 rounded-xl hover:opacity-90"
                     style={{ backgroundColor: "#2f9e6e" }}
                   >
@@ -496,8 +450,6 @@ function NewApplications() {
                 </div>
               )}
 
-<<<<<<< HEAD
-=======
               {approvingId === a.id && (
                 <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50/40 p-4 space-y-3">
                   <p className="text-sm font-medium text-emerald-800">
@@ -530,7 +482,6 @@ function NewApplications() {
                 </div>
               )}
 
->>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
               {negotiatingId === a.id && <LenderNegotiatePanel application={a} onRespond={handleRespond} />}
             </div>
           )})}
@@ -583,15 +534,12 @@ function ExistingRequests() {
       if (!user || !active) return
       setUserId(user.id)
 
-<<<<<<< HEAD
-=======
       if (DEMO_MODE) {
         setRequests(demoHardshipRequests)
         setLoading(false)
         return
       }
 
->>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
       const { data: loans } = await supabase
         .from("loans")
         .select("id, borrower_id, target_amount")
@@ -657,13 +605,6 @@ function ExistingRequests() {
   const visible = requests.filter((r) => r.status === activeTab)
 
   async function updateStatus(id: number, status: RequestStatus) {
-<<<<<<< HEAD
-    const { error } = await supabase.from("requests").update({ status }).eq("id", id)
-    if (!error) {
-      setRequests((prev) => prev.map((r) => (r.id === id ? { ...r, status } : r)))
-      if (userId && (status === "Approved" || status === "Rejected")) {
-        const req = requests.find((r) => r.id === id)
-=======
     const req = requests.find((r) => r.id === id)
     const patch: Record<string, unknown> = { status }
     if (req && req.status === "Pending") patch.responded_at = new Date().toISOString()
@@ -671,7 +612,6 @@ function ExistingRequests() {
     if (!error) {
       setRequests((prev) => prev.map((r) => (r.id === id ? { ...r, status } : r)))
       if (userId && (status === "Approved" || status === "Rejected")) {
->>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
         await logAuditEvent({
           lenderId: userId,
           actorId: userId,

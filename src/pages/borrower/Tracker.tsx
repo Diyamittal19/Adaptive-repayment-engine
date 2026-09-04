@@ -1,9 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
-<<<<<<< HEAD
-=======
 import { DEMO_MODE, demoLoan, demoPayments, demoExpenses, demoSavingsBalance, demoGoals, demoOccupation } from "@/lib/demoData";
->>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
 import type { LucideIcon } from "lucide-react";
 import {
   Wallet,
@@ -23,12 +20,9 @@ import {
   BadgeCheck,
   HeartPulse,
   Landmark,
-<<<<<<< HEAD
-=======
   PiggyBank,
   Hammer,
   Rocket,
->>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
   Send,
   LayoutGrid,
   ListChecks,
@@ -255,17 +249,6 @@ const occupations: Occupation[] = [
   },
 ];
 
-<<<<<<< HEAD
-// Stand-in for what an AI/calendar API would return automatically —
-// the borrower's occupation (already on file from onboarding) and the
-// public holiday count for the upcoming month (public information).
-const borrowerOccupationKey = "gig-delivery";
-const upcomingHolidaysThisMonth = 2;
-
-function computeVolatilityForecast(occupationKey: string, holidaysThisMonth: number): VolatilityForecastResult {
-  const occ = occupations.find((o) => o.key === occupationKey) || occupations[0];
-
-=======
 // The borrower's occupation comes from their own profile data (fetched
 // below, not hardcoded), and the public holiday count for the current
 // month is fetched live from a public holiday calendar API — nothing
@@ -280,7 +263,6 @@ function matchOccupation(occupationText: string | null): Occupation {
 }
 
 function computeVolatilityForecast(occ: Occupation, holidaysThisMonth: number): VolatilityForecastResult {
->>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
   if (holidaysThisMonth === 0) {
     return { direction: "typical", occ, message: "No public holidays this month — a fairly typical month expected." };
   }
@@ -302,11 +284,6 @@ function computeVolatilityForecast(occ: Occupation, holidaysThisMonth: number): 
   return { direction: "typical", occ, message: "Public holidays don't tend to move your income much — a fairly typical month expected." };
 }
 
-<<<<<<< HEAD
-function VolatilityForecast() {
-  const forecast = computeVolatilityForecast(borrowerOccupationKey, upcomingHolidaysThisMonth);
-  const occ = forecast.occ;
-=======
 // India's 17 central gazetted public holidays for 2026, per DoPT Office
 // Memorandum F.No.12/2/2023-JCA dated 3 July 2025 (dopt.gov.in). This is a
 // real, sourced calendar — not a placeholder number — updated once a year
@@ -376,7 +353,6 @@ function VolatilityForecast() {
   }).length;
 
   const forecast = computeVolatilityForecast(occ, holidaysThisMonth);
->>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
 
   const directionStyles = {
     up: { badge: "bg-teal-50 text-teal-700", icon: TrendingUp, label: "Likely higher" },
@@ -452,8 +428,6 @@ function computeProductSuggestions({
     });
   }
 
-<<<<<<< HEAD
-=======
   // PM Jan Dhan Yojana — foundational, fits any borrower regardless of savings level
   suggestions.push({
     key: "pmjdy",
@@ -468,7 +442,6 @@ function computeProductSuggestions({
     stat2Value: "₹2,00,000",
   });
 
->>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
   // PM Mudra Yojana, Shishu category (real — small collateral-free business loan)
   if (savingsBalance >= 500 && volatility < 0.2) {
     suggestions.push({
@@ -485,8 +458,6 @@ function computeProductSuggestions({
     });
   }
 
-<<<<<<< HEAD
-=======
   // Atal Pension Yojana — small, steady contributions fit a borrower who's
   // already shown they can save regularly
   if (savingsBalance >= 1000 && volatility < 0.25) {
@@ -521,7 +492,6 @@ function computeProductSuggestions({
     });
   }
 
->>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
   suggestions.push({
     key: "goal-plus",
     icon: BadgeCheck,
@@ -535,8 +505,6 @@ function computeProductSuggestions({
     stat2Value: "Per good month",
   });
 
-<<<<<<< HEAD
-=======
   // PM SVANidhi — collateral-free working-capital loan for street vendors
   suggestions.push({
     key: "pm-svanidhi",
@@ -583,7 +551,6 @@ function computeProductSuggestions({
     });
   }
 
->>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
   return suggestions;
 }
 
@@ -704,20 +671,6 @@ function TrendChart({ history }: TrendChartProps) {
       <div className="mt-4" style={{ height: 220 }}>
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={history} margin={{ top: 8, right: 8, left: -8, bottom: 0 }}>
-<<<<<<< HEAD
-            <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
-            <XAxis dataKey="month" axisLine={{ stroke: "#000" }} tickLine={{ stroke: "#000" }} tick={{ fill: "#000", fontSize: 12 }} />
-            <YAxis
-              axisLine={{ stroke: "#000" }}
-              tickLine={{ stroke: "#000" }}
-              tick={{ fill: "#000", fontSize: 12 }}
-              width={64}
-              tickFormatter={(v) => `₹${v.toLocaleString("en-IN")}`}
-            />
-            <Tooltip content={<CustomTooltip />} cursor={{ stroke: "#E2E8F0" }} />
-            <Line type="monotone" dataKey="income" stroke="#0f172a" strokeWidth={2.5} dot={{ r: 3 }} activeDot={{ r: 5 }} />
-            <Line type="monotone" dataKey="expenses" stroke="#dc2626" strokeWidth={2.5} dot={{ r: 3 }} activeDot={{ r: 5 }} />
-=======
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
             <XAxis dataKey="month" axisLine={{ stroke: "var(--border)" }} tickLine={{ stroke: "var(--border)" }} tick={{ fill: "var(--muted-foreground)", fontSize: 12 }} />
             <YAxis
@@ -730,20 +683,14 @@ function TrendChart({ history }: TrendChartProps) {
             <Tooltip content={<CustomTooltip />} cursor={{ stroke: "var(--border)" }} />
             <Line type="monotone" dataKey="income" stroke="var(--foreground)" strokeWidth={2.5} dot={{ r: 3 }} activeDot={{ r: 5 }} />
             <Line type="monotone" dataKey="expenses" stroke="var(--danger)" strokeWidth={2.5} dot={{ r: 3 }} activeDot={{ r: 5 }} />
->>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
             <Line type="monotone" dataKey="saved" stroke="#0d9488" strokeWidth={2.5} dot={{ r: 3 }} activeDot={{ r: 5 }} />
           </LineChart>
         </ResponsiveContainer>
       </div>
       <div className="flex items-center gap-5 mt-3">
         {[
-<<<<<<< HEAD
-          { color: "#0f172a", label: "Income" },
-          { color: "#dc2626", label: "Expenses" },
-=======
           { color: "var(--foreground)", label: "Income" },
           { color: "var(--danger)", label: "Expenses" },
->>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
           { color: "#0d9488", label: "Saved" },
         ].map(({ color, label }) => (
           <div key={label} className="flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -1019,8 +966,6 @@ export default function Tracker() {
     let active = true;
 
     async function load() {
-<<<<<<< HEAD
-=======
       if (DEMO_MODE) {
         if (!active) return;
         setUserId("demo-borrower");
@@ -1033,7 +978,6 @@ export default function Tracker() {
         return;
       }
 
->>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
       const { data: { user } } = await supabase.auth.getUser();
       if (!user || !active) return;
       setUserId(user.id);
@@ -1143,14 +1087,11 @@ export default function Tracker() {
 
   async function handleAddExpense({ amount, category, note }: QuickLogSubmit) {
     if (!category || !userId) return;
-<<<<<<< HEAD
-=======
     if (DEMO_MODE) {
       const newExpense = { id: Date.now(), category, amount, note: note || "", logged_at: new Date().toISOString().slice(0, 10) };
       setExpenses((prev) => [newExpense, ...prev]);
       return;
     }
->>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
     const { data, error } = await supabase
       .from("expenses")
       .insert({ borrower_id: userId, category, amount, note: note || null })
@@ -1162,13 +1103,10 @@ export default function Tracker() {
   }
   async function handleSave(amount: number) {
     if (!userId) return;
-<<<<<<< HEAD
-=======
     if (DEMO_MODE) {
       setSavingsBalance((prev) => prev + amount);
       return;
     }
->>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
     const { error } = await supabase.from("savings_transactions").insert({ borrower_id: userId, amount });
     if (!error) setSavingsBalance((prev) => prev + amount);
   }
@@ -1177,25 +1115,19 @@ export default function Tracker() {
   }
   async function handleUseSavings({ amount }: QuickLogSubmit) {
     if (!userId) return;
-<<<<<<< HEAD
-=======
     if (DEMO_MODE) {
       setSavingsBalance((prev) => Math.max(0, prev - amount));
       return;
     }
->>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
     const { error } = await supabase.from("savings_transactions").insert({ borrower_id: userId, amount: -amount });
     if (!error) setSavingsBalance((prev) => Math.max(0, prev - amount));
   }
   async function handleAddGoal(goal: Goal) {
     if (!userId) return;
-<<<<<<< HEAD
-=======
     if (DEMO_MODE) {
       setGoals((prev) => [...prev, { id: Date.now(), name: goal.name, target: goal.target, saved: goal.saved }]);
       return;
     }
->>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
     const { data, error } = await supabase
       .from("goals")
       .insert({ borrower_id: userId, name: goal.name, target: goal.target, saved: goal.saved })
@@ -1207,13 +1139,10 @@ export default function Tracker() {
     const current = goals.find((g) => g.id === id);
     if (!current) return;
     const newSaved = current.saved + amount;
-<<<<<<< HEAD
-=======
     if (DEMO_MODE) {
       setGoals((prev) => prev.map((g) => (g.id === id ? { ...g, saved: newSaved } : g)));
       return;
     }
->>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
     const { error } = await supabase.from("goals").update({ saved: newSaved }).eq("id", id);
     if (!error) {
       setGoals((prev) => prev.map((g) => (g.id === id ? { ...g, saved: newSaved } : g)));
@@ -1310,11 +1239,7 @@ export default function Tracker() {
               <h3 className="text-foreground font-semibold text-lg">Suggested for you</h3>
             </div>
             <p className="text-muted-foreground text-sm mt-1">Based on your savings and income pattern — nothing here is applied automatically</p>
-<<<<<<< HEAD
-            <p className="text-muted-foreground text-xs mt-1">PMSBY, PMJJBY, and Mudra (Shishu) are real Government of India schemes; rates shown are current as of 2026 — confirm exact terms before applying.</p>
-=======
             <p className="text-muted-foreground text-xs mt-1">PMSBY, PMJJBY, PM Jan Dhan Yojana, Mudra (Shishu/Kishor), Atal Pension Yojana, PM SVANidhi, PM Vishwakarma, and Stand-Up India are real Government of India schemes; rates shown are current as of 2026 — confirm exact terms before applying.</p>
->>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
               {(showAllSuggestions ? productSuggestions : productSuggestions.slice(0, 2)).map((item) => (
                 <SuggestionCard key={item.key} item={item} />

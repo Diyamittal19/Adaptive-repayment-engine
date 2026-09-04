@@ -37,26 +37,17 @@ app.get("/api/health", (req, res) => {
 
 app.use("/api/whatif", whatifRouter);
 
-<<<<<<< HEAD
 // Voice: POST /api/voice/transcribe (audio -> text) and
 // POST /api/voice/extract (text -> structured form fields). Both via
 // Gemini — see routes/voice.js for details.
 app.use("/api/voice", voiceRouter);
-=======
-// Voice endpoints go here once we've settled what "voice" means for
-// this app (see backend/routes/voice.js for the placeholder + notes).
->>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   console.log(`AI backend running at http://localhost:${PORT}`);
   if (!process.env.GEMINI_API_KEY) {
     console.warn(
-<<<<<<< HEAD
       "⚠️  GEMINI_API_KEY is not set — /api/whatif/insight and both /api/voice routes will fail until it's added to backend/.env"
-=======
-      "⚠️  GEMINI_API_KEY is not set — /api/whatif/insight will fail until it's added to backend/.env"
->>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
     );
   }
 });

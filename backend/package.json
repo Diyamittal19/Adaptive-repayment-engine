@@ -3,12 +3,6 @@
   "private": true,
   "type": "module",
   "version": "1.0.0",
-<<<<<<< HEAD
-  "engines": {
-    "node": ">=18"
-  },
-=======
->>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
   "scripts": {
     "dev": "node --watch server.js",
     "start": "node server.js"
