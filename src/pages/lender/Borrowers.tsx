@@ -2,9 +2,14 @@ import { useEffect, useState } from "react";
 import jsPDF from "jspdf";
 import { getBorrowerPassportById, bandTone, type CreditPassport } from "@/lib/creditPassport";
 import { supabase } from "@/lib/supabaseClient";
+<<<<<<< HEAD
 import BorrowerPassportModal from "@/components/passport/BorrowerPassportModal";
 import VoiceButton from "@/components/voice/VoiceButton";
 import { extractFormFields } from "@/lib/voice";
+=======
+import { DEMO_MODE, demoLenderManualLedgers, demoPayments, demoPlatformBorrowers } from "@/lib/demoData";
+import BorrowerPassportModal from "@/components/passport/BorrowerPassportModal";
+>>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
 
 // ── Types ──────────────────────────────────────────────────────────────────
 type TxType = "loan" | "repayment" | "interest";
@@ -244,6 +249,15 @@ function ManualLedger() {
       if (!user || !active) return;
       setUserId(user.id);
 
+<<<<<<< HEAD
+=======
+      if (DEMO_MODE) {
+        setBorrowers(demoLenderManualLedgers);
+        setLoading(false);
+        return;
+      }
+
+>>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
       const { data } = await supabase
         .from("lender_manual_ledgers")
         .select("*, lender_manual_ledger_transactions(*)")
@@ -262,6 +276,7 @@ function ManualLedger() {
   const emptyForm = { name: "", phone: "", email: "", address: "", loanAmount: "", interestRate: "", startDate: "", dueDate: "", note: "", status: "active" as BorrowerStatus, initialNote: "" };
   const [form, setForm] = useState(emptyForm);
 
+<<<<<<< HEAD
   // Voice fill: record -> Gemini transcribes it -> Gemini extracts fields ->
   // merged into the form above. User still reviews/edits before submitting.
   const [voiceNote, setVoiceNote] = useState<string | null>(null);
@@ -272,6 +287,8 @@ function ManualLedger() {
     setVoiceNote(`Filled from: "${transcript}" — review before adding.`);
   }
 
+=======
+>>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
   // Add transaction form
   const [txForm, setTxForm] = useState({ date: new Date().toISOString().slice(0, 10), type: "repayment" as TxType, amount: "", note: "" });
 
@@ -344,7 +361,10 @@ function ManualLedger() {
     const nb = mapBorrowerRow({ ...ledgerRow, lender_manual_ledger_transactions: txRow ? [txRow] : [] });
     setBorrowers(prev => [nb, ...prev]);
     setForm(emptyForm);
+<<<<<<< HEAD
     setVoiceNote(null);
+=======
+>>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
     setModal(null);
   }
 
@@ -515,10 +535,17 @@ function ManualLedger() {
                     if (!passport) return <span className="text-xs text-muted-foreground">—</span>;
                     const tone = bandTone(passport.band);
                     const toneClass: Record<string, string> = {
+<<<<<<< HEAD
                       success: "bg-success/10 text-success-foreground",
                       info: "bg-info/10 text-info-foreground",
                       warning: "bg-warning/10 text-warning-foreground",
                       danger: "bg-destructive/10 text-destructive",
+=======
+                      success: "bg-success text-success-foreground",
+                      info: "bg-info text-info-foreground",
+                      warning: "bg-warning text-warning-foreground",
+                      danger: "bg-destructive text-destructive",
+>>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
                     };
                     return (
                       <button
@@ -597,10 +624,17 @@ function ManualLedger() {
             if (!passport) return null;
             const tone = bandTone(passport.band);
             const toneClass: Record<string, string> = {
+<<<<<<< HEAD
               success: "bg-success/10 text-success-foreground",
               info: "bg-info/10 text-info-foreground",
               warning: "bg-warning/10 text-warning-foreground",
               danger: "bg-destructive/10 text-destructive",
+=======
+              success: "bg-success text-success-foreground",
+              info: "bg-info text-info-foreground",
+              warning: "bg-warning/10 text-warning-foreground",
+              danger: "bg-destructive text-destructive",
+>>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
             };
             return (
               <div className="rounded-xl border border-border p-4 flex items-center justify-between gap-4 flex-wrap">
@@ -687,6 +721,7 @@ function ManualLedger() {
   const addBorrowerModal = modal === "addBorrower" && (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/20 backdrop-blur-sm p-4">
       <div className="bg-card w-full max-w-xl rounded-2xl shadow-2xl border border-border overflow-hidden max-h-[90vh] flex flex-col">
+<<<<<<< HEAD
         <div className="flex items-center justify-between px-6 py-5 border-b border-border gap-3">
           <div>
             <h2 className="font-display font-semibold text-lg text-foreground">Add Borrower Manually</h2>
@@ -704,6 +739,15 @@ function ManualLedger() {
         {voiceNote && (
           <p className="px-6 pt-3 text-xs text-muted-foreground italic">{voiceNote}</p>
         )}
+=======
+        <div className="flex items-center justify-between px-6 py-5 border-b border-border">
+          <div>
+            <h2 className="font-display font-semibold text-lg text-foreground">Add Borrower Manually</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">Enter contact and full loan amount details</p>
+          </div>
+          <button onClick={() => setModal(null)} className="w-9 h-9 flex items-center justify-center rounded-xl border border-border text-muted-foreground hover:bg-secondary transition-colors">✕</button>
+        </div>
+>>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
 
         <form onSubmit={handleAddBorrower} className="overflow-y-auto flex-1 p-6 space-y-6">
           {/* Contact */}
@@ -824,13 +868,23 @@ function ManualLedger() {
 
 type PlatformLoanRow = {
   id: number;
+<<<<<<< HEAD
   borrowerName: string;
+=======
+  borrowerId: string;
+  borrowerName: string;
+  borrowerPhone: string;
+>>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
   targetAmount: number;
   floor: number;
   ceiling: number;
   outstanding: number;
   dueDate: string;
+<<<<<<< HEAD
   status: string;
+=======
+  status: BorrowerStatus;
+>>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
 };
 
 type PlatformPaymentRow = {
@@ -843,10 +897,30 @@ type PlatformPaymentRow = {
 function PlatformBorrowerDetail({ loan, onClose }: { loan: PlatformLoanRow; onClose: () => void }) {
   const [loading, setLoading] = useState(true);
   const [payments, setPayments] = useState<PlatformPaymentRow[]>([]);
+<<<<<<< HEAD
+=======
+  const [passportView, setPassportView] = useState<CreditPassport | null>(null);
+>>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
 
   useEffect(() => {
     let active = true;
     async function load() {
+<<<<<<< HEAD
+=======
+      if (DEMO_MODE) {
+        setPayments(
+          demoPayments.map((p) => ({
+            cycleMonth: p.cycle_month,
+            amountDue: p.amount_due,
+            amountPaid: p.amount_paid,
+            paidOnTime: p.paid_on_time,
+          }))
+        );
+        setLoading(false);
+        return;
+      }
+
+>>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
       const { data } = await supabase
         .from("payments")
         .select("cycle_month, amount_due, amount_paid, paid_on_time")
@@ -867,6 +941,7 @@ function PlatformBorrowerDetail({ loan, onClose }: { loan: PlatformLoanRow; onCl
     return () => { active = false; };
   }, [loan.id]);
 
+<<<<<<< HEAD
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-slate-900/50" onClick={onClose} />
@@ -912,6 +987,129 @@ function PlatformBorrowerDetail({ loan, onClose }: { loan: PlatformLoanRow; onCl
           </table>
         )}
       </div>
+=======
+  const totalPaid = payments.reduce((sum, p) => sum + p.amountPaid, 0);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/20 backdrop-blur-sm p-4">
+      <div className="bg-card w-full max-w-2xl rounded-2xl shadow-2xl border border-border overflow-hidden max-h-[90vh] flex flex-col">
+        <div className="flex items-center justify-between px-6 py-5 border-b border-border">
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-full bg-slate-900 flex items-center justify-center text-white font-display font-bold text-lg">
+              {loan.borrowerName.charAt(0)}
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="font-display font-semibold text-lg text-foreground">{loan.borrowerName}</h2>
+                <StatusPill status={loan.status} />
+              </div>
+              <p className="text-xs text-muted-foreground">{loan.borrowerPhone || "—"} &middot; Registered platform loan</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="w-9 h-9 flex items-center justify-center rounded-xl border border-border text-muted-foreground hover:bg-secondary transition-colors">
+            &#10005;
+          </button>
+        </div>
+
+        <div className="overflow-y-auto flex-1 p-6 space-y-5">
+          <div className="grid grid-cols-3 gap-3">
+            {[
+              { label: "Target payment", val: formatINR(loan.targetAmount) },
+              { label: "Outstanding", val: formatINR(loan.outstanding), hi: true },
+              { label: "Total repaid", val: formatINR(totalPaid) },
+            ].map((c) => (
+              <div key={c.label} className={`rounded-xl p-3.5 border ${c.hi ? "bg-slate-900 text-white border-slate-900" : "bg-secondary border-border"}`}>
+                <p className={`text-[10px] font-semibold uppercase tracking-wider mb-1 ${c.hi ? "text-white/70" : "text-muted-foreground"}`}>{c.label}</p>
+                <p className={`font-display text-xl font-bold ${c.hi ? "text-white" : "text-foreground"}`}>{c.val}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-sm">
+            {[
+              ["Floor", formatINR(loan.floor)],
+              ["Ceiling", formatINR(loan.ceiling)],
+              ["Due date", new Date(loan.dueDate).toLocaleDateString("en-IN", { month: "short", day: "numeric", year: "numeric" })],
+              ["Status", STATUS_LABEL[loan.status]],
+            ].map(([l, v]) => (
+              <div key={l} className="flex gap-2">
+                <span className="text-muted-foreground w-28 shrink-0">{l}</span>
+                <span className="text-foreground font-medium">{v}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Credit Passport */}
+          {(() => {
+            const passport = getBorrowerPassportById(loan.borrowerId);
+            if (!passport) return null;
+            const tone = bandTone(passport.band);
+            const toneClass: Record<string, string> = {
+              success: "bg-success text-success-foreground",
+              info: "bg-info text-info-foreground",
+              warning: "bg-warning text-warning-foreground",
+              danger: "bg-destructive text-destructive",
+            };
+            return (
+              <div className="rounded-xl border border-border p-4 flex items-center justify-between gap-4 flex-wrap">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1">Credit Passport</p>
+                  <p className="text-sm text-foreground max-w-md">{passport.summary}</p>
+                </div>
+                <div className="flex items-center gap-3 shrink-0">
+                  <span className={`text-sm font-semibold px-3 py-1.5 rounded-full ${toneClass[tone]}`}>
+                    {passport.overallScore} · {passport.band}
+                  </span>
+                  <button
+                    onClick={() => setPassportView(passport)}
+                    className="text-xs font-semibold text-accent-foreground hover:underline"
+                  >
+                    View full breakdown
+                  </button>
+                </div>
+              </div>
+            );
+          })()}
+
+          <div className="rounded-xl border border-border overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-secondary/40">
+              <h3 className="text-sm font-semibold text-foreground">Payment History</h3>
+            </div>
+            {loading ? (
+              <p className="text-center py-8 text-muted-foreground text-sm">Loading&hellip;</p>
+            ) : payments.length === 0 ? (
+              <p className="text-center py-8 text-muted-foreground text-sm">No payment cycles recorded yet.</p>
+            ) : (
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border bg-secondary/20">
+                    <th className="text-left px-4 py-2 text-xs font-semibold text-muted-foreground">Cycle</th>
+                    <th className="text-left px-4 py-2 text-xs font-semibold text-muted-foreground">Due</th>
+                    <th className="text-left px-4 py-2 text-xs font-semibold text-muted-foreground">Paid</th>
+                    <th className="text-left px-4 py-2 text-xs font-semibold text-muted-foreground">On time</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {payments.map((p, i) => (
+                    <tr key={i}>
+                      <td className="px-4 py-2.5 text-foreground">{new Date(p.cycleMonth).toLocaleDateString("en-IN", { month: "short", year: "numeric" })}</td>
+                      <td className="px-4 py-2.5 text-foreground">{formatINR(p.amountDue)}</td>
+                      <td className="px-4 py-2.5 text-foreground">{formatINR(p.amountPaid)}</td>
+                      <td className="px-4 py-2.5">
+                        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${p.paidOnTime ? "bg-success text-success-foreground" : "bg-warning text-warning-foreground"}`}>
+                          {p.paidOnTime ? "Yes" : "No"}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </div>
+      </div>
+      {passportView && <BorrowerPassportModal passport={passportView} onClose={() => setPassportView(null)} />}
+>>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
     </div>
   );
 }
@@ -919,7 +1117,13 @@ function PlatformBorrowerDetail({ loan, onClose }: { loan: PlatformLoanRow; onCl
 function PlatformBorrowers() {
   const [loading, setLoading] = useState(true);
   const [loans, setLoans] = useState<PlatformLoanRow[]>([]);
+<<<<<<< HEAD
   const [detailLoan, setDetailLoan] = useState<PlatformLoanRow | null>(null);
+=======
+  const [tab, setTab] = useState<"active" | "past">("active");
+  const [search, setSearch] = useState("");
+  const [selectedId, setSelectedId] = useState<number | null>(null);
+>>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
 
   useEffect(() => {
     let active = true;
@@ -927,6 +1131,28 @@ function PlatformBorrowers() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user || !active) return;
 
+<<<<<<< HEAD
+=======
+      if (DEMO_MODE) {
+        setLoans(
+          demoPlatformBorrowers.map((l) => ({
+            id: l.id,
+            borrowerId: String(l.id),
+            borrowerName: l.borrowerName,
+            borrowerPhone: "",
+            targetAmount: l.targetAmount,
+            floor: l.floor,
+            ceiling: l.ceiling,
+            outstanding: l.outstanding,
+            dueDate: l.dueDate,
+            status: l.status as BorrowerStatus,
+          }))
+        );
+        setLoading(false);
+        return;
+      }
+
+>>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
       const { data: loanRows } = await supabase
         .from("loans")
         .select("id, borrower_id, target_amount, floor, ceiling, outstanding, due_date, status")
@@ -937,6 +1163,7 @@ function PlatformBorrowers() {
         return;
       }
 
+<<<<<<< HEAD
       const { data: profiles } = await supabase
         .from("profiles")
         .select("id, name")
@@ -944,17 +1171,38 @@ function PlatformBorrowers() {
 
       if (!active) return;
       const nameById = new Map((profiles ?? []).map((p) => [p.id, p.name]));
+=======
+      const borrowerIds = [...new Set(loanRows.map((l) => l.borrower_id))];
+      const [{ data: profiles }, { data: borrowerProfiles }] = await Promise.all([
+        supabase.from("profiles").select("id, name").in("id", borrowerIds),
+        supabase.from("borrower_profiles").select("borrower_id, phone").in("borrower_id", borrowerIds),
+      ]);
+
+      if (!active) return;
+      const nameById = new Map((profiles ?? []).map((p) => [p.id, p.name]));
+      const phoneById = new Map((borrowerProfiles ?? []).map((b) => [b.borrower_id, b.phone]));
+>>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
 
       setLoans(
         loanRows.map((l) => ({
           id: l.id,
+<<<<<<< HEAD
           borrowerName: nameById.get(l.borrower_id) ?? "Unknown borrower",
+=======
+          borrowerId: l.borrower_id,
+          borrowerName: nameById.get(l.borrower_id) ?? "Unknown borrower",
+          borrowerPhone: phoneById.get(l.borrower_id) ?? "",
+>>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
           targetAmount: l.target_amount,
           floor: l.floor,
           ceiling: l.ceiling,
           outstanding: Number(l.outstanding),
           dueDate: l.due_date,
+<<<<<<< HEAD
           status: l.status,
+=======
+          status: l.status as BorrowerStatus,
+>>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
         }))
       );
       setLoading(false);
@@ -963,11 +1211,27 @@ function PlatformBorrowers() {
     return () => { active = false; };
   }, []);
 
+<<<<<<< HEAD
+=======
+  const activeL = loans.filter((l) => l.status === "active" || l.status === "overdue");
+  const pastL = loans.filter((l) => l.status !== "active" && l.status !== "overdue");
+  const list = tab === "active" ? activeL : pastL;
+  const filtered = list.filter((l) => l.borrowerName.toLowerCase().includes(search.toLowerCase()) || l.borrowerPhone.includes(search));
+  const selected = loans.find((l) => l.id === selectedId) ?? null;
+  const closedCleanly = pastL.filter((l) => l.status === "paid").length;
+  const writtenOff = pastL.filter((l) => l.status === "written-off").length;
+  const eligibleReB = pastL.filter((l) => l.status === "paid" || l.status === "settled-early").length;
+
+>>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
   if (loading) {
     return (
       <main className="flex-1 overflow-y-auto p-8">
         <div className="flex h-64 items-center justify-center">
+<<<<<<< HEAD
           <p className="text-sm text-muted-foreground">Loading…</p>
+=======
+          <p className="text-sm text-muted-foreground">Loading&hellip;</p>
+>>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
         </div>
       </main>
     );
@@ -985,6 +1249,7 @@ function PlatformBorrowers() {
 
   return (
     <main className="flex-1 overflow-y-auto p-8">
+<<<<<<< HEAD
       <div className="mb-6">
         <h1 className="font-display text-4xl font-bold text-foreground">Borrowers</h1>
         <p className="text-muted-foreground mt-1.5 text-sm max-w-xl">
@@ -1029,6 +1294,99 @@ function PlatformBorrowers() {
         ))}
       </div>
       {detailLoan && <PlatformBorrowerDetail loan={detailLoan} onClose={() => setDetailLoan(null)} />}
+=======
+      <div className="mb-2">
+        <h1 className="font-display text-4xl font-bold text-foreground">Borrowers</h1>
+        <p className="text-muted-foreground mt-1.5 text-sm max-w-xl">
+          {activeL.length} active borrowers and {pastL.length} closed relationships — real platform loans, structured and repaid through the app.
+        </p>
+      </div>
+
+      <div className="flex gap-2 mt-6 mb-5 bg-secondary/50 w-fit rounded-full p-1">
+        <PillTab label={`Active loans · ${activeL.length}`} active={tab === "active"} onClick={() => { setTab("active"); setSearch(""); }} />
+        <PillTab label={`Past borrowers · ${pastL.length}`} active={tab === "past"} onClick={() => { setTab("past"); setSearch(""); }} />
+      </div>
+
+      {/* Stat cards (past tab only) */}
+      {tab === "past" && (
+        <div className="grid grid-cols-3 gap-4 mb-5">
+          {[
+            { label: "CLOSED CLEANLY", value: closedCleanly, sub: "Repaid in full or settled early" },
+            { label: "WRITTEN OFF", value: writtenOff, sub: "Unrecovered balances" },
+            { label: "ELIGIBLE TO RE-BORROW", value: eligibleReB, sub: "No active loan, good history" },
+          ].map((c) => (
+            <div key={c.label} className="bg-card rounded-2xl border border-border p-5 shadow-[var(--shadow-panel)]">
+              <p className="text-[10px] font-semibold tracking-widest text-muted-foreground uppercase mb-2">{c.label}</p>
+              <p className="font-display text-4xl font-bold text-foreground mb-1">{c.value}</p>
+              <p className="text-xs text-muted-foreground">{c.sub}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="bg-card rounded-2xl border border-border shadow-[var(--shadow-panel)] p-4 mb-4">
+        <div className="relative">
+          <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">&#128269;</span>
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search by name or phone"
+            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-border bg-background text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+          />
+        </div>
+      </div>
+
+      <div className="bg-card rounded-2xl border border-border shadow-[var(--shadow-panel)] overflow-hidden">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-border">
+              <th className="text-left px-5 py-3.5 text-xs font-semibold text-muted-foreground">Borrower</th>
+              <th className="text-left px-4 py-3.5 text-xs font-semibold text-muted-foreground">Target payment</th>
+              <th className="text-left px-4 py-3.5 text-xs font-semibold text-muted-foreground">Due date</th>
+              <th className="text-left px-4 py-3.5 text-xs font-semibold text-muted-foreground">Outstanding</th>
+              <th className="text-left px-4 py-3.5 text-xs font-semibold text-muted-foreground">Status</th>
+              <th className="px-4 py-3.5" />
+            </tr>
+          </thead>
+          <tbody>
+            {filtered.length === 0 && (
+              <tr><td colSpan={6} className="text-center py-16 text-muted-foreground">No borrowers found.</td></tr>
+            )}
+            {filtered.map((l, i) => (
+              <tr
+                key={l.id}
+                onClick={() => setSelectedId(l.id)}
+                className={`cursor-pointer hover:bg-secondary/50 transition-colors ${i !== filtered.length - 1 ? "border-b border-border" : ""}`}
+              >
+                <td className="px-5 py-3.5">
+                  <div className="flex items-center gap-3">
+                    <span className={`w-2 h-2 rounded-full flex-shrink-0 ${l.status === "active" ? "bg-success-foreground" : l.status === "overdue" ? "bg-destructive" : "bg-muted-foreground"}`} />
+                    <div>
+                      <p className="font-medium text-foreground">{l.borrowerName}</p>
+                      <p className="text-xs text-muted-foreground">{l.borrowerPhone || "—"}</p>
+                    </div>
+                  </div>
+                </td>
+                <td className="px-4 py-3.5 text-foreground">{formatINR(l.targetAmount)}</td>
+                <td className="px-4 py-3.5 text-foreground">{new Date(l.dueDate).toLocaleDateString("en-IN", { month: "short", day: "numeric", year: "numeric" })}</td>
+                <td className="px-4 py-3.5 text-foreground">{formatINR(l.outstanding)}</td>
+                <td className="px-4 py-3.5"><StatusPill status={l.status} /></td>
+                <td className="px-4 py-3.5 text-right">
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setSelectedId(l.id); }}
+                    className="text-xs font-medium text-foreground border border-border rounded-lg px-3 py-1.5 hover:bg-secondary transition-colors"
+                  >
+                    View
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {selected && <PlatformBorrowerDetail loan={selected} onClose={() => setSelectedId(null)} />}
+>>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
     </main>
   );
 }

@@ -325,6 +325,10 @@ const LENDER_SEEDS: LenderSeed[] = [
   { id: 4, name: "Rekha Deshmukh", type: "Individual lender", rating: 4.3, verified: false, rateMin: 1.8, rateMax: 2.8, maxAmount: 30000, avgResponseHours: 14, yearsActive: 1, hardshipAccommodationPct: 45, repeatBorrowerPct: 33, borrowersServed: 21 },
   { id: 5, name: "Unnati Finance Circle", type: "Microfinance institution", rating: 4.7, verified: true, rateMin: 1.4, rateMax: 2.2, maxAmount: 200000, avgResponseHours: 10, yearsActive: 5, hardshipAccommodationPct: 74, repeatBorrowerPct: 64, borrowersServed: 640 },
   { id: 6, name: "Vikram Sawant", type: "Individual lender", rating: 4.1, verified: false, rateMin: 2.0, rateMax: 3.0, maxAmount: 25000, avgResponseHours: 26, yearsActive: 2, hardshipAccommodationPct: 40, repeatBorrowerPct: 29, borrowersServed: 17 },
+  // Demo-mode lenders — names match demoLoan / demoPlatformLoans / demoLenderDirectory in demoData.ts
+  { id: 7, name: "Suresh Kumar", type: "Individual lender", rating: 4.6, verified: true, rateMin: 1.2, rateMax: 1.8, maxAmount: 200000, avgResponseHours: 8, yearsActive: 4, hardshipAccommodationPct: 76, repeatBorrowerPct: 60, borrowersServed: 58 },
+  { id: 8, name: "Anjali Deshmukh", type: "Individual lender", rating: 4.8, verified: false, rateMin: 1.0, rateMax: 1.6, maxAmount: 100000, avgResponseHours: 5, yearsActive: 2, hardshipAccommodationPct: 82, repeatBorrowerPct: 55, borrowersServed: 33 },
+  { id: 9, name: "Grameen Sahakari Society", type: "Cooperative society", rating: 4.4, verified: true, rateMin: 1.1, rateMax: 1.5, maxAmount: 300000, avgResponseHours: 24, yearsActive: 8, hardshipAccommodationPct: 68, repeatBorrowerPct: 66, borrowersServed: 720 },
 ];
 
 const LENDER_FACTOR_COPY: Record<string, Record<Band, { detail: string; tip: string }>> = {
@@ -423,6 +427,42 @@ interface BorrowerLedgerRecord {
 }
 
 const BORROWER_LEDGERS: BorrowerLedgerRecord[] = [
+  // Demo-mode entries — ids match demoLenderManualLedgers in demoData.ts
+  { id: "6001", name: "Meena Devi", role: "Small tailoring business top-up", status: "active", loanAmount: 10000, transactions: [
+    { type: "loan", amount: 10000, note: "Initial disbursal", balance: 10000 },
+    { type: "repayment", amount: 4000, note: "First repayment", balance: 6000 },
+  ]},
+  { id: "6002", name: "Faruk Ahmed", role: "Cart repair loan, fully repaid", status: "paid", loanAmount: 4000, transactions: [
+    { type: "loan", amount: 4000, note: "Initial disbursal", balance: 4000 },
+    { type: "repayment", amount: 4000, note: "Paid in full", balance: 0 },
+  ]},
+  // Demo-mode entries — ids match demoPlatformBorrowers in demoData.ts so
+  // the Credit Passport section has something real to look up in demos.
+  { id: "9001", name: "Rajat Sharma", role: "Delivery Partner", status: "active", loanAmount: 15000, transactions: [
+    { type: "loan", amount: 15000, note: "Loan disbursed", balance: 15000 },
+    { type: "repayment", amount: 15000, note: "On-time repayment", balance: 0 },
+    { type: "repayment", amount: 8000, note: "Paid at floor, tough cycle", balance: 7000 },
+  ]},
+  { id: "9002", name: "Kavya Reddy", role: "Tailor", status: "active", loanAmount: 9000, transactions: [
+    { type: "loan", amount: 9000, note: "Loan disbursed", balance: 9000 },
+    { type: "repayment", amount: 9000, note: "On-time repayment", balance: 0 },
+  ]},
+  { id: "9003", name: "Manoj Tiwari", role: "Auto Driver", status: "active", loanAmount: 20000, transactions: [
+    { type: "loan", amount: 20000, note: "Loan disbursed", balance: 20000 },
+    { type: "repayment", amount: 12000, note: "Partial repayment", balance: 8000 },
+  ]},
+  { id: "9004", name: "Sunita Yadav", role: "Street Vendor", status: "overdue", loanAmount: 7000, transactions: [
+    { type: "loan", amount: 7000, note: "Loan disbursed", balance: 7000 },
+    { type: "repayment", amount: 4000, note: "Partial repayment, market closed", balance: 3000 },
+  ]},
+  { id: "9005", name: "Arjun Nair", role: "Freelance Photographer", status: "active", loanAmount: 11000, transactions: [
+    { type: "loan", amount: 11000, note: "Loan disbursed", balance: 11000 },
+    { type: "repayment", amount: 11000, note: "On-time repayment", balance: 0 },
+  ]},
+  { id: "9006", name: "Deepa Iyer", role: "Home Baker", status: "paid", loanAmount: 6000, transactions: [
+    { type: "loan", amount: 6000, note: "Loan disbursed", balance: 6000 },
+    { type: "repayment", amount: 6000, note: "Repaid in full", balance: 0 },
+  ]},
   { id: "1", name: "Arjun Nambiar", role: "Home renovation", status: "paid", loanAmount: 120000, transactions: [
     { type: "loan", amount: 120000, note: "Loan disbursed", balance: 120000 },
     { type: "repayment", amount: 60000, note: "Partial repayment", balance: 60000 },
@@ -622,19 +662,77 @@ const MY_LENDER_FACTOR_COPY: Record<string, Record<Band, { detail: string; tip: 
   },
 };
 
+// Same scoring/weighting/copy logic as getMyTrustPassport() below, but
+// takes real computed inputs instead of the hardcoded LENDER_STATS —
+// used by PortfolioOverview.tsx once real data exists to compute from.
+export function buildLenderTrustPassport(input: {
+  name: string;
+  hardshipReceived: number;
+  hardshipAccommodated: number;
+  avgResponseHours: number | null; // null = no responded_at data yet
+  rateWithinRangeRate: number | null; // 0-100, null = no approved rate data yet
+  repeatBorrowers: number;
+  totalBorrowers: number;
+  borrowersServed: number;
+  monthsActive: number;
+}): LenderTrustPassport {
+  const flexibilityScore = input.hardshipReceived > 0
+    ? clamp((input.hardshipAccommodated / input.hardshipReceived) * 100)
+    : 100; // no hardship requests yet — nothing counting against them
+  const responsivenessScore = input.avgResponseHours !== null
+    ? clamp(100 - input.avgResponseHours * 2.2)
+    : 50; // neutral until there's at least one responded_at to measure
+  const transparencyScore = input.rateWithinRangeRate !== null
+    ? clamp(input.rateWithinRangeRate)
+    : 50; // neutral until there's at least one approved rate to compare
+  const loyaltyScore = input.totalBorrowers > 0
+    ? clamp((input.repeatBorrowers / input.totalBorrowers) * 100 * 1.1)
+    : 0;
+
+  const defs: { key: string; label: string; weight: number; score: number }[] = [
+    { key: "flexibility", label: "Flexibility with hardship requests", weight: 0.3, score: flexibilityScore },
+    { key: "responsiveness", label: "Responsiveness", weight: 0.25, score: responsivenessScore },
+    { key: "transparency", label: "Rate transparency", weight: 0.25, score: transparencyScore },
+    { key: "loyalty", label: "Repeat-borrower trust", weight: 0.2, score: loyaltyScore },
+  ];
+
+  const factors: LenderTrustFactor[] = defs.map((d) => ({ ...d, ...MY_LENDER_FACTOR_COPY[d.key][bandFor(d.score)] }));
+  const overallScore = clamp(factors.reduce((sum, f) => sum + f.score * f.weight, 0));
+  const band = bandFor(overallScore);
+
+  const summary =
+    band === "Excellent"
+      ? "You're highly trusted by borrowers — flexible, responsive, and transparent about terms."
+      : band === "Good"
+      ? "You have a solid trust record with your borrowers."
+      : band === "Fair"
+      ? "Your trust score is workable but has clear room to improve — see the breakdown below."
+      : "Your trust score needs attention — borrowers are seeing this before they even request a loan.";
+
+  return {
+    kind: "lender",
+    lenderId: "me",
+    name: input.name,
+    overallScore,
+    band,
+    summary,
+    factors,
+    borrowersServed: input.borrowersServed,
+    yearsActive: Math.round((input.monthsActive / 12) * 10) / 10,
+  };
+}
+
 export function getMyTrustPassport(): LenderTrustPassport {
   const s = LENDER_STATS;
   const flexibilityScore = clamp((s.hardshipRequestsAccommodated / s.hardshipRequestsReceived) * 100);
   const responsivenessScore = clamp(100 - s.avgResponseHours * 2.2);
   const transparencyScore = clamp(100 - s.rateVarianceComplaints * 12);
-  const disputesScore = clamp((s.disputesResolvedAmicably / Math.max(s.disputesRaised, 1)) * 100 - 5);
   const loyaltyScore = clamp((s.repeatBorrowers / s.totalBorrowers) * 100 * 1.1);
 
   const defs: { key: string; label: string; weight: number; score: number }[] = [
-    { key: "flexibility", label: "Flexibility with hardship requests", weight: 0.25, score: flexibilityScore },
-    { key: "responsiveness", label: "Responsiveness", weight: 0.2, score: responsivenessScore },
-    { key: "transparency", label: "Rate transparency", weight: 0.2, score: transparencyScore },
-    { key: "disputes", label: "Dispute resolution", weight: 0.15, score: disputesScore },
+    { key: "flexibility", label: "Flexibility with hardship requests", weight: 0.3, score: flexibilityScore },
+    { key: "responsiveness", label: "Responsiveness", weight: 0.25, score: responsivenessScore },
+    { key: "transparency", label: "Rate transparency", weight: 0.25, score: transparencyScore },
     { key: "loyalty", label: "Repeat-borrower trust", weight: 0.2, score: loyaltyScore },
   ];
 

@@ -8,6 +8,10 @@ import {
   Flag,
 } from "lucide-react"
 import { supabase } from "@/lib/supabaseClient"
+<<<<<<< HEAD
+=======
+import { DEMO_MODE, demoAuditEntries } from "@/lib/demoData"
+>>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
 
 /* =========================================================================
    Audit log entries — mirrors the borrowers, requests, and templates that
@@ -54,6 +58,28 @@ export default function AuditLog() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user || !active) return
 
+<<<<<<< HEAD
+=======
+      if (DEMO_MODE) {
+        setAuditEntries(
+          demoAuditEntries.map((e) => {
+            const d = new Date(e.createdAt)
+            return {
+              id: e.id,
+              date: d.toLocaleDateString("en-IN", { month: "short", day: "numeric", year: "numeric" }),
+              time: d.toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit" }),
+              actor: e.actorName,
+              action: e.action,
+              actionText: e.actionText,
+              entity: e.entity,
+            }
+          })
+        )
+        setLoading(false)
+        return
+      }
+
+>>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
       const { data: rows } = await supabase
         .from("audit_log")
         .select("*")
@@ -117,7 +143,11 @@ export default function AuditLog() {
   if (loading) {
     return (
       <div className="flex h-64 items-center justify-center">
+<<<<<<< HEAD
         <p className="text-sm text-slate-400">Loading…</p>
+=======
+        <p className="text-sm text-muted-foreground">Loading…</p>
+>>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
       </div>
     )
   }
@@ -125,20 +155,35 @@ export default function AuditLog() {
   return (
     <div className="p-6 md:p-8 space-y-6 sm:space-y-8">
       <div>
+<<<<<<< HEAD
         <h2 className="text-2xl sm:text-4xl font-semibold text-slate-900">Audit log</h2>
         <p className="text-slate-500 mt-3 max-w-xl text-sm sm:text-base">
+=======
+        <h2 className="text-2xl sm:text-4xl font-semibold text-foreground">Audit log</h2>
+        <p className="text-muted-foreground mt-3 max-w-xl text-sm sm:text-base">
+>>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
           A record of every action taken on borrower plans, requests, and policy templates.
         </p>
       </div>
 
+<<<<<<< HEAD
       <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 sm:p-6 space-y-4">
         <div className="relative">
           <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+=======
+      <div className="bg-card rounded-2xl border border-border shadow-sm p-5 sm:p-6 space-y-4">
+        <div className="relative">
+          <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
+>>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search by borrower, action, or reviewer"
+<<<<<<< HEAD
             className="w-full text-sm bg-white border border-slate-200 rounded-xl pl-11 pr-4 py-3 text-slate-700 placeholder:text-slate-400 outline-none focus:border-teal-300 focus:ring-2 focus:ring-teal-100 transition-colors"
+=======
+            className="w-full text-sm bg-card border border-border rounded-xl pl-11 pr-4 py-3 text-foreground placeholder:text-muted-foreground outline-none focus:border-teal-300 focus:ring-2 focus:ring-teal-100 transition-colors"
+>>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
           />
         </div>
 
@@ -150,7 +195,11 @@ export default function AuditLog() {
               className={`text-sm font-medium px-4 py-2 rounded-xl border transition-colors ${
                 activeFilter === f
                   ? "bg-slate-900 text-white border-slate-900"
+<<<<<<< HEAD
                   : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
+=======
+                  : "bg-card text-muted-foreground border-border hover:bg-secondary"
+>>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
               }`}
             >
               {f}
@@ -160,14 +209,23 @@ export default function AuditLog() {
       </div>
 
       {grouped.length === 0 ? (
+<<<<<<< HEAD
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-10 text-center text-slate-400 text-sm">
+=======
+        <div className="bg-card rounded-2xl border border-border shadow-sm p-10 text-center text-muted-foreground text-sm">
+>>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
           No matching activity found.
         </div>
       ) : (
         <div className="space-y-5">
           {grouped.map(([date, entries]) => (
+<<<<<<< HEAD
             <div key={date} className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 sm:p-6">
               <p className="text-sm font-medium text-slate-400 mb-4">{date}</p>
+=======
+            <div key={date} className="bg-card rounded-2xl border border-border shadow-sm p-5 sm:p-6">
+              <p className="text-sm font-medium text-muted-foreground mb-4">{date}</p>
+>>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
               <div className="divide-y divide-slate-100">
                 {entries.map((entry) => {
                   const { icon: Icon, bg, color } = actionIconStyles[entry.action]
@@ -180,12 +238,21 @@ export default function AuditLog() {
                         <Icon size={14} style={{ color }} />
                       </div>
                       <div className="min-w-0">
+<<<<<<< HEAD
                         <p className="text-sm text-slate-700 leading-relaxed">
                           <span className="font-semibold text-slate-900">{entry.actor}</span>{" "}
                           {entry.actionText}{" "}
                           <span className="font-semibold text-slate-900">{entry.entity}</span>
                         </p>
                         <p className="text-slate-400 text-xs mt-0.5">{entry.time}</p>
+=======
+                        <p className="text-sm text-foreground leading-relaxed">
+                          <span className="font-semibold text-foreground">{entry.actor}</span>{" "}
+                          {entry.actionText}{" "}
+                          <span className="font-semibold text-foreground">{entry.entity}</span>
+                        </p>
+                        <p className="text-muted-foreground text-xs mt-0.5">{entry.time}</p>
+>>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
                       </div>
                     </div>
                   )

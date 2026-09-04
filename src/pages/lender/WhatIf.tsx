@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { AlertTriangle, ArrowRight, Search, SlidersHorizontal, TriangleAlert } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
+<<<<<<< HEAD
 import VoiceButton from "@/components/voice/VoiceButton";
+=======
+>>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
 import {
   BORROWERS,
   PORTFOLIO,
@@ -363,6 +366,7 @@ export default function WhatIf() {
     setTouched(true);
   }
 
+<<<<<<< HEAD
   // Voice: fills the custom-question box with the transcript so the
   // lender can review/edit it before running the scenario — same
   // "review before acting" pattern as the voice-fill forms.
@@ -370,6 +374,8 @@ export default function WhatIf() {
     setDraft(text);
   }
 
+=======
+>>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
   const ind = simulateIndividual(borrower, shock, floor, ceiling);
   const port = simulatePortfolio(shock, floor, ceiling, share);
   const severity: Severity = mode === "individual" ? ind.severity : port.severity;
@@ -502,10 +508,16 @@ export default function WhatIf() {
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && runCustom()}
+<<<<<<< HEAD
                 placeholder="Type your own, or tap the mic to speak it — e.g. 'What if I extend the catch-up window by 2 cycles?'"
                 className="w-full rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-ring/40"
               />
               <VoiceButton label="Speak" busyLabel="Transcribing…" onTranscript={handleVoiceQuery} className="shrink-0" />
+=======
+                placeholder="Type your own — e.g. 'What if I extend the catch-up window by 2 cycles?'"
+                className="w-full rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-ring/40"
+              />
+>>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
               <button
                 onClick={runCustom}
                 className="flex shrink-0 items-center justify-center gap-2 rounded-lg bg-navy px-4 py-2.5 text-sm font-medium text-navy-foreground transition-opacity hover:opacity-90"

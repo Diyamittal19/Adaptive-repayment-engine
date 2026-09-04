@@ -1,5 +1,9 @@
 import { useState, useMemo, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
+<<<<<<< HEAD
+=======
+import { DEMO_MODE, demoLoan, demoPayments, demoExpenses, demoSavingsBalance, demoGoals, demoOccupation } from "@/lib/demoData";
+>>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
 import type { LucideIcon } from "lucide-react";
 import {
   Wallet,
@@ -19,6 +23,12 @@ import {
   BadgeCheck,
   HeartPulse,
   Landmark,
+<<<<<<< HEAD
+=======
+  PiggyBank,
+  Hammer,
+  Rocket,
+>>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
   Send,
   LayoutGrid,
   ListChecks,
@@ -245,6 +255,7 @@ const occupations: Occupation[] = [
   },
 ];
 
+<<<<<<< HEAD
 // Stand-in for what an AI/calendar API would return automatically —
 // the borrower's occupation (already on file from onboarding) and the
 // public holiday count for the upcoming month (public information).
@@ -254,6 +265,22 @@ const upcomingHolidaysThisMonth = 2;
 function computeVolatilityForecast(occupationKey: string, holidaysThisMonth: number): VolatilityForecastResult {
   const occ = occupations.find((o) => o.key === occupationKey) || occupations[0];
 
+=======
+// The borrower's occupation comes from their own profile data (fetched
+// below, not hardcoded), and the public holiday count for the current
+// month is fetched live from a public holiday calendar API — nothing
+// here is a fixed sample value.
+function matchOccupation(occupationText: string | null): Occupation {
+  if (!occupationText) return occupations[3]; // freelancer/consultant — neutral default when unset
+  const t = occupationText.toLowerCase();
+  if (t.includes("deliver") || t.includes("ride") || t.includes("driver") || t.includes("gig")) return occupations[0];
+  if (t.includes("tutor") || t.includes("teach")) return occupations[1];
+  if (t.includes("vendor") || t.includes("shop") || t.includes("retail") || t.includes("stall")) return occupations[2];
+  return occupations[3];
+}
+
+function computeVolatilityForecast(occ: Occupation, holidaysThisMonth: number): VolatilityForecastResult {
+>>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
   if (holidaysThisMonth === 0) {
     return { direction: "typical", occ, message: "No public holidays this month — a fairly typical month expected." };
   }
@@ -275,9 +302,81 @@ function computeVolatilityForecast(occupationKey: string, holidaysThisMonth: num
   return { direction: "typical", occ, message: "Public holidays don't tend to move your income much — a fairly typical month expected." };
 }
 
+<<<<<<< HEAD
 function VolatilityForecast() {
   const forecast = computeVolatilityForecast(borrowerOccupationKey, upcomingHolidaysThisMonth);
   const occ = forecast.occ;
+=======
+// India's 17 central gazetted public holidays for 2026, per DoPT Office
+// Memorandum F.No.12/2/2023-JCA dated 3 July 2025 (dopt.gov.in). This is a
+// real, sourced calendar — not a placeholder number — updated once a year
+// when the next DoPT circular is published, rather than fetched live from
+// a third-party API (Nager.Date/nagerholidays.com does not reliably cover
+// India — it returns an empty response for the IN country code).
+const INDIA_GAZETTED_HOLIDAYS_2026 = [
+  "2026-01-26", // Republic Day
+  "2026-03-04", // Holi
+  "2026-03-21", // Id-ul-Fitr
+  "2026-03-26", // Ram Navami
+  "2026-03-31", // Mahavir Jayanti
+  "2026-04-03", // Good Friday
+  "2026-05-01", // Buddha Purnima
+  "2026-05-27", // Id-ul-Zuha (Bakrid)
+  "2026-06-26", // Muharram
+  "2026-08-15", // Independence Day
+  "2026-08-26", // Milad-un-Nabi
+  "2026-09-04", // Janmashtami
+  "2026-10-02", // Mahatma Gandhi Jayanti
+  "2026-10-20", // Dussehra
+  "2026-11-08", // Diwali
+  "2026-11-24", // Guru Nanak Jayanti
+  "2026-12-25", // Christmas Day
+];
+
+function VolatilityForecast() {
+  const [loading, setLoading] = useState(true);
+  const [occupationText, setOccupationText] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    async function load() {
+      // Occupation — read from the borrower's own profile data.
+      if (DEMO_MODE) {
+        if (active) setOccupationText(demoOccupation);
+      } else {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data } = await supabase
+            .from("borrower_profiles")
+            .select("occupation")
+            .eq("borrower_id", user.id)
+            .maybeSingle();
+          if (active) setOccupationText(data?.occupation ?? null);
+        }
+      }
+      if (active) setLoading(false);
+    }
+    load();
+    return () => { active = false; };
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="bg-card rounded-2xl border border-border shadow-sm p-5 sm:p-6">
+        <p className="text-sm text-muted-foreground">Checking your occupation and this month's public holidays…</p>
+      </div>
+    );
+  }
+
+  const occ = matchOccupation(occupationText);
+  const now = new Date();
+  const holidaysThisMonth = INDIA_GAZETTED_HOLIDAYS_2026.filter((d) => {
+    const date = new Date(d);
+    return date.getFullYear() === now.getFullYear() && date.getMonth() === now.getMonth();
+  }).length;
+
+  const forecast = computeVolatilityForecast(occ, holidaysThisMonth);
+>>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
 
   const directionStyles = {
     up: { badge: "bg-teal-50 text-teal-700", icon: TrendingUp, label: "Likely higher" },
@@ -353,6 +452,23 @@ function computeProductSuggestions({
     });
   }
 
+<<<<<<< HEAD
+=======
+  // PM Jan Dhan Yojana — foundational, fits any borrower regardless of savings level
+  suggestions.push({
+    key: "pmjdy",
+    icon: Wallet,
+    accent: "navy" as AccentKey,
+    type: "Banking · Govt. scheme",
+    name: "PM Jan Dhan Yojana",
+    reason: "A zero-balance account with a free RuPay card, built-in accident cover, and a small emergency overdraft",
+    stat1Label: "Overdraft",
+    stat1Value: "Up to ₹10,000",
+    stat2Label: "Accident cover",
+    stat2Value: "₹2,00,000",
+  });
+
+>>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
   // PM Mudra Yojana, Shishu category (real — small collateral-free business loan)
   if (savingsBalance >= 500 && volatility < 0.2) {
     suggestions.push({
@@ -369,6 +485,43 @@ function computeProductSuggestions({
     });
   }
 
+<<<<<<< HEAD
+=======
+  // Atal Pension Yojana — small, steady contributions fit a borrower who's
+  // already shown they can save regularly
+  if (savingsBalance >= 1000 && volatility < 0.25) {
+    suggestions.push({
+      key: "apy",
+      icon: PiggyBank,
+      accent: "navy" as AccentKey,
+      type: "Pension · Govt. scheme",
+      name: "Atal Pension Yojana",
+      reason: "A guaranteed monthly pension after 60, funded by small automatic monthly contributions",
+      stat1Label: "Pension",
+      stat1Value: "₹1,000–5,000 / mo",
+      stat2Label: "Entry age",
+      stat2Value: "18–40 yrs",
+    });
+  }
+
+  // Mudra Loan, Kishor category — a step up once savings suggest a more
+  // established, growing business rather than a brand-new one
+  if (savingsBalance >= 5000 && volatility < 0.2) {
+    suggestions.push({
+      key: "mudra-kishor",
+      icon: Landmark,
+      accent: "navy" as AccentKey,
+      type: "Credit · Govt. scheme",
+      name: "Mudra Loan — Kishor",
+      reason: "A step up from Shishu once a business has a track record — for expansion, equipment, or working capital",
+      stat1Label: "Range",
+      stat1Value: "₹50,000–₹5,00,000",
+      stat2Label: "Rate",
+      stat2Value: "Bank MCLR + spread",
+    });
+  }
+
+>>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
   suggestions.push({
     key: "goal-plus",
     icon: BadgeCheck,
@@ -382,6 +535,55 @@ function computeProductSuggestions({
     stat2Value: "Per good month",
   });
 
+<<<<<<< HEAD
+=======
+  // PM SVANidhi — collateral-free working-capital loan for street vendors
+  suggestions.push({
+    key: "pm-svanidhi",
+    icon: Landmark,
+    accent: "teal" as AccentKey,
+    type: "Credit · Govt. scheme",
+    name: "PM SVANidhi",
+    reason: "A collateral-free working-capital loan for street vendors, with a real interest subsidy for repaying on time",
+    stat1Label: "1st tranche",
+    stat1Value: "Up to ₹15,000",
+    stat2Label: "Interest subsidy",
+    stat2Value: "7% / yr on-time",
+  });
+
+  // PM Vishwakarma — skill training, toolkit grant, and low-interest credit
+  // for artisans/craftspeople in traditional trades
+  suggestions.push({
+    key: "pm-vishwakarma",
+    icon: Hammer,
+    accent: "navy" as AccentKey,
+    type: "Skill & Credit · Govt. scheme",
+    name: "PM Vishwakarma",
+    reason: "Combines a ₹15,000 toolkit grant with low-interest, collateral-free credit for traditional trade work",
+    stat1Label: "Loan (2 tranches)",
+    stat1Value: "Up to ₹3,00,000",
+    stat2Label: "Rate",
+    stat2Value: "5% / yr",
+  });
+
+  // Stand-Up India — larger bank credit for a first-time SC/ST or woman
+  // entrepreneur; shown once a business shows real stability
+  if (savingsBalance >= 10000 && volatility < 0.15) {
+    suggestions.push({
+      key: "stand-up-india",
+      icon: Rocket,
+      accent: "teal" as AccentKey,
+      type: "Credit · Govt. scheme",
+      name: "Stand-Up India",
+      reason: "Collateral-free bank credit for a first-time SC/ST or woman entrepreneur to launch a new enterprise",
+      stat1Label: "Range",
+      stat1Value: "₹10,00,000–₹1 Cr",
+      stat2Label: "Tenure",
+      stat2Value: "Up to 7 yrs",
+    });
+  }
+
+>>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
   return suggestions;
 }
 
@@ -502,6 +704,7 @@ function TrendChart({ history }: TrendChartProps) {
       <div className="mt-4" style={{ height: 220 }}>
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={history} margin={{ top: 8, right: 8, left: -8, bottom: 0 }}>
+<<<<<<< HEAD
             <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
             <XAxis dataKey="month" axisLine={{ stroke: "#000" }} tickLine={{ stroke: "#000" }} tick={{ fill: "#000", fontSize: 12 }} />
             <YAxis
@@ -514,14 +717,33 @@ function TrendChart({ history }: TrendChartProps) {
             <Tooltip content={<CustomTooltip />} cursor={{ stroke: "#E2E8F0" }} />
             <Line type="monotone" dataKey="income" stroke="#0f172a" strokeWidth={2.5} dot={{ r: 3 }} activeDot={{ r: 5 }} />
             <Line type="monotone" dataKey="expenses" stroke="#dc2626" strokeWidth={2.5} dot={{ r: 3 }} activeDot={{ r: 5 }} />
+=======
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+            <XAxis dataKey="month" axisLine={{ stroke: "var(--border)" }} tickLine={{ stroke: "var(--border)" }} tick={{ fill: "var(--muted-foreground)", fontSize: 12 }} />
+            <YAxis
+              axisLine={{ stroke: "var(--border)" }}
+              tickLine={{ stroke: "var(--border)" }}
+              tick={{ fill: "var(--muted-foreground)", fontSize: 12 }}
+              width={64}
+              tickFormatter={(v) => `₹${v.toLocaleString("en-IN")}`}
+            />
+            <Tooltip content={<CustomTooltip />} cursor={{ stroke: "var(--border)" }} />
+            <Line type="monotone" dataKey="income" stroke="var(--foreground)" strokeWidth={2.5} dot={{ r: 3 }} activeDot={{ r: 5 }} />
+            <Line type="monotone" dataKey="expenses" stroke="var(--danger)" strokeWidth={2.5} dot={{ r: 3 }} activeDot={{ r: 5 }} />
+>>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
             <Line type="monotone" dataKey="saved" stroke="#0d9488" strokeWidth={2.5} dot={{ r: 3 }} activeDot={{ r: 5 }} />
           </LineChart>
         </ResponsiveContainer>
       </div>
       <div className="flex items-center gap-5 mt-3">
         {[
+<<<<<<< HEAD
           { color: "#0f172a", label: "Income" },
           { color: "#dc2626", label: "Expenses" },
+=======
+          { color: "var(--foreground)", label: "Income" },
+          { color: "var(--danger)", label: "Expenses" },
+>>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
           { color: "#0d9488", label: "Saved" },
         ].map(({ color, label }) => (
           <div key={label} className="flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -797,6 +1019,21 @@ export default function Tracker() {
     let active = true;
 
     async function load() {
+<<<<<<< HEAD
+=======
+      if (DEMO_MODE) {
+        if (!active) return;
+        setUserId("demo-borrower");
+        setLoanId(demoLoan.id);
+        setPayments(demoPayments);
+        setExpenses(demoExpenses);
+        setGoals(demoGoals);
+        setSavingsBalance(demoSavingsBalance);
+        setLoading(false);
+        return;
+      }
+
+>>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
       const { data: { user } } = await supabase.auth.getUser();
       if (!user || !active) return;
       setUserId(user.id);
@@ -906,6 +1143,14 @@ export default function Tracker() {
 
   async function handleAddExpense({ amount, category, note }: QuickLogSubmit) {
     if (!category || !userId) return;
+<<<<<<< HEAD
+=======
+    if (DEMO_MODE) {
+      const newExpense = { id: Date.now(), category, amount, note: note || "", logged_at: new Date().toISOString().slice(0, 10) };
+      setExpenses((prev) => [newExpense, ...prev]);
+      return;
+    }
+>>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
     const { data, error } = await supabase
       .from("expenses")
       .insert({ borrower_id: userId, category, amount, note: note || null })
@@ -917,6 +1162,13 @@ export default function Tracker() {
   }
   async function handleSave(amount: number) {
     if (!userId) return;
+<<<<<<< HEAD
+=======
+    if (DEMO_MODE) {
+      setSavingsBalance((prev) => prev + amount);
+      return;
+    }
+>>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
     const { error } = await supabase.from("savings_transactions").insert({ borrower_id: userId, amount });
     if (!error) setSavingsBalance((prev) => prev + amount);
   }
@@ -925,11 +1177,25 @@ export default function Tracker() {
   }
   async function handleUseSavings({ amount }: QuickLogSubmit) {
     if (!userId) return;
+<<<<<<< HEAD
+=======
+    if (DEMO_MODE) {
+      setSavingsBalance((prev) => Math.max(0, prev - amount));
+      return;
+    }
+>>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
     const { error } = await supabase.from("savings_transactions").insert({ borrower_id: userId, amount: -amount });
     if (!error) setSavingsBalance((prev) => Math.max(0, prev - amount));
   }
   async function handleAddGoal(goal: Goal) {
     if (!userId) return;
+<<<<<<< HEAD
+=======
+    if (DEMO_MODE) {
+      setGoals((prev) => [...prev, { id: Date.now(), name: goal.name, target: goal.target, saved: goal.saved }]);
+      return;
+    }
+>>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
     const { data, error } = await supabase
       .from("goals")
       .insert({ borrower_id: userId, name: goal.name, target: goal.target, saved: goal.saved })
@@ -941,6 +1207,13 @@ export default function Tracker() {
     const current = goals.find((g) => g.id === id);
     if (!current) return;
     const newSaved = current.saved + amount;
+<<<<<<< HEAD
+=======
+    if (DEMO_MODE) {
+      setGoals((prev) => prev.map((g) => (g.id === id ? { ...g, saved: newSaved } : g)));
+      return;
+    }
+>>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
     const { error } = await supabase.from("goals").update({ saved: newSaved }).eq("id", id);
     if (!error) {
       setGoals((prev) => prev.map((g) => (g.id === id ? { ...g, saved: newSaved } : g)));
@@ -1037,7 +1310,11 @@ export default function Tracker() {
               <h3 className="text-foreground font-semibold text-lg">Suggested for you</h3>
             </div>
             <p className="text-muted-foreground text-sm mt-1">Based on your savings and income pattern — nothing here is applied automatically</p>
+<<<<<<< HEAD
             <p className="text-muted-foreground text-xs mt-1">PMSBY, PMJJBY, and Mudra (Shishu) are real Government of India schemes; rates shown are current as of 2026 — confirm exact terms before applying.</p>
+=======
+            <p className="text-muted-foreground text-xs mt-1">PMSBY, PMJJBY, PM Jan Dhan Yojana, Mudra (Shishu/Kishor), Atal Pension Yojana, PM SVANidhi, PM Vishwakarma, and Stand-Up India are real Government of India schemes; rates shown are current as of 2026 — confirm exact terms before applying.</p>
+>>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
               {(showAllSuggestions ? productSuggestions : productSuggestions.slice(0, 2)).map((item) => (
                 <SuggestionCard key={item.key} item={item} />

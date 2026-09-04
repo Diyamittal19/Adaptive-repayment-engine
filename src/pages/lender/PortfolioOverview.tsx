@@ -23,8 +23,15 @@ import {
   X,
   type LucideIcon,
 } from "lucide-react"
+<<<<<<< HEAD
 import TrustScoreCard from "@/components/passport/TrustScoreCard"
 import { supabase } from "@/lib/supabaseClient"
+=======
+import { supabase } from "@/lib/supabaseClient"
+import TrustScoreCard from "@/components/passport/TrustScoreCard"
+import { buildLenderTrustPassport } from "@/lib/creditPassport"
+import { DEMO_MODE, demoLenderLoans, demoLenderPayments, demoHardshipForPortfolio, demoBorrowerNames, demoBorrowerOccupations } from "@/lib/demoData"
+>>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
 
 // ─── Data ────────────────────────────────────────────────────────────────
 // chartData, and the borrowers list further below, used to be hardcoded
@@ -209,6 +216,10 @@ export default function PortfolioOverview({
   const [bannerVisible, setBannerVisible] = useState(true)
 
   const [loading, setLoading] = useState(true)
+<<<<<<< HEAD
+=======
+  const [hasLoans, setHasLoans] = useState(false)
+>>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
   const [activeLoansCount, setActiveLoansCount] = useState(0)
   const [pendingHardshipCount, setPendingHardshipCount] = useState(0)
   const [onTimeRate, setOnTimeRate] = useState(0)
@@ -218,23 +229,58 @@ export default function PortfolioOverview({
   const [statusMix, setStatusMix] = useState({ onTime: 0, atFloor: 0, deferred: 0 })
   const [floorSavedCount, setFloorSavedCount] = useState(0)
   const [dueSoon, setDueSoon] = useState<Borrower[]>([])
+<<<<<<< HEAD
 
+=======
+  const [trustPassport, setTrustPassport] = useState<ReturnType<typeof buildLenderTrustPassport> | null>(null)
+  const [hasCycleData, setHasCycleData] = useState(true)
+
+  // Raw data, fetched once — everything below that's specific to whichever
+  // cycle is selected in the calendar picker gets recomputed from this
+  // whenever selectedYear/selectedMonth changes, instead of re-fetching.
+  const [rawLoans, setRawLoans] = useState<{ id: number; borrower_id: string; target_amount: number; floor: number; due_date: string; status: string }[]>([])
+  const [rawPayments, setRawPayments] = useState<{ loan_id: number; cycle_month: string; amount_due: number; amount_paid: number; paid_on_time: boolean }[]>([])
+  const [rawHardship, setRawHardship] = useState<{ id: number; loan_id: number; status: string }[]>([])
+  const [nameById, setNameById] = useState<Map<string, string>>(new Map())
+  const [occByBorrower, setOccByBorrower] = useState<Map<string, string>>(new Map())
+
+  // ── Fetch once on mount ────────────────────────────────────────────────
+>>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
   useEffect(() => {
     let active = true
     async function load() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user || !active) return
 
+<<<<<<< HEAD
       const { data: loans } = await supabase
         .from("loans")
         .select("id, borrower_id, target_amount, floor, due_date, status")
         .eq("lender_id", user.id)
+=======
+      let loans, payments, hardshipReqs, profiles, borrowerProfiles
+
+      if (DEMO_MODE) {
+        loans = demoLenderLoans
+        payments = demoLenderPayments
+        hardshipReqs = demoHardshipForPortfolio
+        profiles = Object.entries(demoBorrowerNames).map(([id, name]) => ({ id, name }))
+        borrowerProfiles = Object.entries(demoBorrowerOccupations).map(([borrower_id, occupation]) => ({ borrower_id, occupation }))
+      } else {
+        const { data: loanRows } = await supabase
+          .from("loans")
+          .select("id, borrower_id, target_amount, floor, due_date, status")
+          .eq("lender_id", user.id)
+        loans = loanRows
+      }
+>>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
 
       if (!loans || loans.length === 0) {
         if (active) setLoading(false)
         return
       }
 
+<<<<<<< HEAD
       const loanIds = loans.map((l) => l.id)
       const floorByLoan = new Map(loans.map((l) => [l.id, l.floor]))
 
@@ -329,6 +375,63 @@ export default function PortfolioOverview({
       setPendingHardshipCount(pendingHardship.length)
 
       // Due soon: loans due within the next 7 days.
+=======
+      setHasLoans(true)
+
+      const loanIds = loans.map((l) => l.id)
+
+      let myName = ""
+      let myRateMin: number | null = null
+      let myRateMax: number | null = null
+      let allHardship: { status: string; created_at: string; responded_at: string | null }[] = []
+      let allApplications: { status: string; created_at: string; responded_at: string | null; interest_rate: number | null }[] = []
+
+      if (!DEMO_MODE) {
+        const results = await Promise.all([
+          supabase.from("payments").select("loan_id, cycle_month, amount_due, amount_paid, paid_on_time").in("loan_id", loanIds),
+          supabase.from("requests").select("id, loan_id, status, created_at, responded_at").eq("type", "hardship").in("loan_id", loanIds),
+          supabase.from("profiles").select("id, name").in("id", [...new Set(loans.map((l) => l.borrower_id))]),
+          supabase.from("borrower_profiles").select("borrower_id, occupation").in("borrower_id", [...new Set(loans.map((l) => l.borrower_id))]),
+          supabase.from("profiles").select("name").eq("id", user.id).single(),
+          supabase.from("lender_profiles").select("rate_min, rate_max").eq("lender_id", user.id).single(),
+          supabase.from("loan_applications").select("status, created_at, responded_at, interest_rate").eq("lender_id", user.id),
+        ])
+        payments = results[0].data
+        hardshipReqs = results[1].data
+        profiles = results[2].data
+        borrowerProfiles = results[3].data
+        myName = results[4].data?.name ?? ""
+        myRateMin = results[5].data?.rate_min ?? null
+        myRateMax = results[5].data?.rate_max ?? null
+        allHardship = results[1].data ?? []
+        allApplications = results[6].data ?? []
+      }
+
+      if (!active) return
+
+      const nameMap = new Map((profiles ?? []).map((p) => [p.id, p.name]))
+      const occMap = new Map((borrowerProfiles ?? []).map((b) => [b.borrower_id, b.occupation]))
+      const allPayments = payments ?? []
+      const pendingHardship = (hardshipReqs ?? []).filter((r) => r.status === "Pending")
+
+      setRawLoans(loans)
+      setRawPayments(allPayments)
+      setRawHardship(hardshipReqs ?? [])
+      setNameById(nameMap)
+      setOccByBorrower(occMap)
+
+      // These aren't tied to any specific cycle — they're current-state
+      // snapshots (right now, not "as of the selected month") — so they're
+      // computed once here, not in the per-cycle effect below.
+      const hardshipLoanIds = new Set(pendingHardship.map((r) => r.loan_id))
+      const overdueBorrowers = new Set(loans.filter((l) => l.status === "overdue").map((l) => l.borrower_id))
+      const hardshipBorrowers = new Set(loans.filter((l) => hardshipLoanIds.has(l.id)).map((l) => l.borrower_id))
+      setAtRiskCount(new Set([...overdueBorrowers, ...hardshipBorrowers]).size)
+      setActiveLoansCount(loans.filter((l) => l.status === "active").length)
+      setPendingHardshipCount(pendingHardship.length)
+
+      const floorByLoan = new Map(loans.map((l) => [l.id, l.floor]))
+>>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
       const now = Date.now()
       const soon = loans
         .map((l) => {
@@ -342,8 +445,13 @@ export default function PortfolioOverview({
             : "On track"
           return {
             borrowerId: l.borrower_id,
+<<<<<<< HEAD
             name: nameById.get(l.borrower_id) ?? "Unknown borrower",
             role: occByBorrower.get(l.borrower_id) ?? "",
+=======
+            name: nameMap.get(l.borrower_id) ?? "Unknown borrower",
+            role: occMap.get(l.borrower_id) ?? "",
+>>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
             loanId: `LN-${l.id}`,
             dueDate: new Date(l.due_date).toLocaleDateString("en-IN", { month: "short", day: "numeric", year: "numeric" }),
             daysLeft,
@@ -357,12 +465,154 @@ export default function PortfolioOverview({
         .map(({ _daysLeft, ...rest }) => rest)
 
       setDueSoon(soon)
+<<<<<<< HEAD
+=======
+
+      if (!DEMO_MODE) {
+        const hardshipReceived = allHardship.length
+        const hardshipAccommodated = allHardship.filter((h) => h.status === "Approved").length
+
+        const respondedRequests = [
+          ...allHardship.filter((h) => h.responded_at),
+          ...allApplications.filter((a) => a.responded_at),
+        ]
+        const avgResponseHours = respondedRequests.length
+          ? respondedRequests.reduce((sum, r) => {
+              const hrs = (new Date(r.responded_at!).getTime() - new Date(r.created_at).getTime()) / (1000 * 60 * 60)
+              return sum + hrs
+            }, 0) / respondedRequests.length
+          : null
+
+        const approvedWithRate = allApplications.filter((a) => a.status === "Approved" && a.interest_rate !== null)
+        const rateWithinRangeRate =
+          approvedWithRate.length && myRateMin !== null && myRateMax !== null
+            ? (approvedWithRate.filter((a) => a.interest_rate! >= myRateMin! && a.interest_rate! <= myRateMax!).length / approvedWithRate.length) * 100
+            : null
+
+        const borrowerLoanCounts = new Map<string, number>()
+        for (const l of loans) borrowerLoanCounts.set(l.borrower_id, (borrowerLoanCounts.get(l.borrower_id) ?? 0) + 1)
+        const totalBorrowers = borrowerLoanCounts.size
+        const repeatBorrowers = [...borrowerLoanCounts.values()].filter((c) => c > 1).length
+
+        const earliestCycle = allPayments.length
+          ? allPayments.reduce((min, p) => (p.cycle_month < min ? p.cycle_month : min), allPayments[0].cycle_month)
+          : null
+        const monthsActive = earliestCycle
+          ? Math.max(1, Math.round((Date.now() - new Date(earliestCycle).getTime()) / (1000 * 60 * 60 * 24 * 30)))
+          : 1
+
+        setTrustPassport(
+          buildLenderTrustPassport({
+            name: myName || "You",
+            hardshipReceived,
+            hardshipAccommodated,
+            avgResponseHours,
+            rateWithinRangeRate,
+            repeatBorrowers,
+            totalBorrowers,
+            borrowersServed: totalBorrowers,
+            monthsActive,
+          })
+        )
+      }
+
+>>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
       setLoading(false)
     }
     load()
     return () => { active = false }
   }, [])
 
+<<<<<<< HEAD
+=======
+  // ── Recompute whenever the selected cycle changes ──────────────────────
+  useEffect(() => {
+    if (rawLoans.length === 0) return
+
+    const floorByLoan = new Map(rawLoans.map((l) => [l.id, l.floor]))
+    function bucket(p: { loan_id: number; amount_paid: number; paid_on_time: boolean }) {
+      if (p.paid_on_time) return "onTime" as const
+      const floor = floorByLoan.get(p.loan_id) ?? 0
+      if (p.amount_paid <= floor) return "atFloor" as const
+      return "deferred" as const
+    }
+
+    const selectedKey = `${selectedYear}-${String(selectedMonth + 1).padStart(2, "0")}`
+
+    // Chart: a 6-month window ending at the selected cycle, so changing
+    // the picker visibly shifts what the chart shows.
+    const windowKeys: string[] = []
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(selectedYear, selectedMonth - i, 1)
+      windowKeys.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`)
+    }
+    const chart = windowKeys.map((key) => {
+      const [y, m] = key.split("-").map(Number)
+      const label = new Date(y, m - 1, 1).toLocaleDateString("en-IN", { month: "short" })
+      const monthPayments = rawPayments.filter((p) => {
+        const d = new Date(p.cycle_month)
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}` === key
+      })
+      const total = monthPayments.length || 1
+      const onTime = monthPayments.filter((p) => bucket(p) === "onTime").length
+      const atFloor = monthPayments.filter((p) => bucket(p) === "atFloor").length
+      const deferred = monthPayments.filter((p) => bucket(p) === "deferred").length
+      return {
+        month: label,
+        onTime: monthPayments.length ? Math.round((onTime / total) * 100) : 0,
+        atFloor: monthPayments.length ? Math.round((atFloor / total) * 100) : 0,
+        deferred: monthPayments.length ? Math.round((deferred / total) * 100) : 0,
+      }
+    })
+    setCycleChart(chart)
+
+    // Everything else: specific to the SELECTED cycle, not "the latest".
+    const selectedPayments = rawPayments.filter((p) => {
+      const d = new Date(p.cycle_month)
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}` === selectedKey
+    })
+
+    if (selectedPayments.length === 0) {
+      setHasCycleData(false)
+      setStatusMix({ onTime: 0, atFloor: 0, deferred: 0 })
+      setOnTimeRate(0)
+      setFloorSavedCount(0)
+      setOnTimeRateDelta(null)
+      return
+    }
+    setHasCycleData(true)
+
+    const total = selectedPayments.length
+    const onTimeCount = selectedPayments.filter((p) => bucket(p) === "onTime").length
+    const atFloorCount = selectedPayments.filter((p) => bucket(p) === "atFloor").length
+    const deferredCount = selectedPayments.filter((p) => bucket(p) === "deferred").length
+    setStatusMix({
+      onTime: Math.round((onTimeCount / total) * 100),
+      atFloor: Math.round((atFloorCount / total) * 100),
+      deferred: Math.round((deferredCount / total) * 100),
+    })
+    const rate = Math.round((onTimeCount / total) * 100)
+    setOnTimeRate(rate)
+    setFloorSavedCount(atFloorCount)
+
+    // Real delta vs the previous cycle — only shown when that cycle
+    // actually has data to compare against, never fabricated.
+    const prevDate = new Date(selectedYear, selectedMonth - 1, 1)
+    const prevKey = `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, "0")}`
+    const prevPayments = rawPayments.filter((p) => {
+      const d = new Date(p.cycle_month)
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}` === prevKey
+    })
+    if (prevPayments.length) {
+      const prevOnTime = prevPayments.filter((p) => bucket(p) === "onTime").length
+      const prevRate = Math.round((prevOnTime / prevPayments.length) * 100)
+      setOnTimeRateDelta(rate - prevRate)
+    } else {
+      setOnTimeRateDelta(null)
+    }
+  }, [selectedYear, selectedMonth, rawLoans, rawPayments])
+
+>>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
   const cycleLabel = `${MONTHS[selectedMonth]} ${selectedYear}`
 
   if (loading) {
@@ -373,6 +623,21 @@ export default function PortfolioOverview({
     )
   }
 
+<<<<<<< HEAD
+=======
+  if (!hasLoans) {
+    return (
+      <div className="p-6 md:p-8">
+        <div className="rounded-2xl border border-border bg-card p-10 text-center">
+          <p className="text-sm text-muted-foreground">
+            No borrowers yet. Once you have an active loan, your portfolio overview will show up here.
+          </p>
+        </div>
+      </div>
+    )
+  }
+
+>>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
   return (
     <div className="p-6 md:p-8 space-y-6">
       {/* Header */}
@@ -409,7 +674,11 @@ export default function PortfolioOverview({
         </div>
       </div>
 
+<<<<<<< HEAD
       <TrustScoreCard />
+=======
+      <TrustScoreCard passport={trustPassport ?? undefined} />
+>>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
 
       {/* Stat Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -417,14 +686,24 @@ export default function PortfolioOverview({
         <StatCard label="Pending hardship requests" value={String(pendingHardshipCount)} icon={FileText} accentColor="#DC2626" bgColor="#FEF2F2" iconColor="text-red-500" deltaText="" deltaColor="#DC2626" note="Awaiting review" />
         <StatCard
           label="On-time rate"
+<<<<<<< HEAD
           value={`${onTimeRate}%`}
+=======
+          value={hasCycleData ? `${onTimeRate}%` : "—"}
+>>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
           icon={TrendingUp}
           accentColor="#2F9E6E"
           bgColor="#F0FDF4"
           iconColor="text-emerald-600"
+<<<<<<< HEAD
           deltaText={onTimeRateDelta !== null ? `${onTimeRateDelta > 0 ? "+" : ""}${onTimeRateDelta}%` : ""}
           deltaColor={onTimeRateDelta !== null && onTimeRateDelta < 0 ? "#DC2626" : "#2F9E6E"}
           note="This cycle"
+=======
+          deltaText={hasCycleData && onTimeRateDelta !== null ? `${onTimeRateDelta > 0 ? "+" : ""}${onTimeRateDelta}%` : ""}
+          deltaColor={onTimeRateDelta !== null && onTimeRateDelta < 0 ? "#DC2626" : "#2F9E6E"}
+          note={hasCycleData ? cycleLabel : `No data for ${cycleLabel}`}
+>>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
         />
         <StatCard label="At-risk borrowers" value={String(atRiskCount)} icon={ShieldAlert} accentColor="#DFA23A" bgColor="#FFFBEB" iconColor="text-amber-500" deltaText="" deltaColor="#2F9E6E" note="Overdue or in hardship" />
       </div>
@@ -432,7 +711,11 @@ export default function PortfolioOverview({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Line Chart */}
         <div className="lg:col-span-2 bg-card rounded-2xl border border-border shadow-sm p-6">
+<<<<<<< HEAD
           <h2 className="font-bold text-foreground text-base mb-0.5">Payment outcomes, by cycle</h2>
+=======
+          <h2 className="font-bold text-foreground text-base mb-0.5">Payment outcomes, 6 cycles ending {cycleLabel}</h2>
+>>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
           <p className="text-muted-foreground text-sm mb-5">On time vs floor payments vs deferred — hover a point for the breakdown</p>
           {cycleChart.length === 0 ? (
             <p className="text-sm text-muted-foreground py-10 text-center">No payment history yet.</p>
@@ -465,6 +748,7 @@ export default function PortfolioOverview({
 
         {/* Status Mix */}
         <div className="bg-card rounded-2xl border border-border shadow-sm p-6 flex flex-col">
+<<<<<<< HEAD
           <h2 className="font-bold text-foreground text-base mb-0.5">This cycle's status mix</h2>
           <p className="text-muted-foreground text-sm mb-6">Where borrowers landed this cycle</p>
           <div className="space-y-5 flex-1">
@@ -487,6 +771,38 @@ export default function PortfolioOverview({
           <p className="text-muted-foreground text-sm mt-6 leading-relaxed">
             Floor payments kept <span className="font-bold text-foreground">{floorSavedCount} {floorSavedCount === 1 ? "borrower" : "borrowers"}</span> out of default this cycle.
           </p>
+=======
+          <h2 className="font-bold text-foreground text-base mb-0.5">{cycleLabel}'s status mix</h2>
+          <p className="text-muted-foreground text-sm mb-6">Where borrowers landed this cycle</p>
+          {!hasCycleData ? (
+            <div className="flex-1 flex items-center justify-center">
+              <p className="text-sm text-muted-foreground text-center">No payment data for {cycleLabel}.</p>
+            </div>
+          ) : (
+            <>
+              <div className="space-y-5 flex-1">
+                {[
+                  { label: "On time", pct: statusMix.onTime, color: "#2F9E6E" },
+                  { label: "At floor", pct: statusMix.atFloor, color: "#DFA23A" },
+                  { label: "Hardship / deferred", pct: statusMix.deferred, color: "#DC2626" },
+                ].map(({ label, pct, color }) => (
+                  <div key={label}>
+                    <div className="flex justify-between text-sm mb-1.5">
+                      <span className="text-foreground font-medium">{label}</span>
+                      <span className="font-semibold text-foreground">{pct}%</span>
+                    </div>
+                    <div className="h-2 w-full bg-secondary rounded-full overflow-hidden">
+                      <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: color }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <p className="text-muted-foreground text-sm mt-6 leading-relaxed">
+                Floor payments kept <span className="font-bold text-foreground">{floorSavedCount} {floorSavedCount === 1 ? "borrower" : "borrowers"}</span> out of default this cycle.
+              </p>
+            </>
+          )}
+>>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
         </div>
       </div>
 

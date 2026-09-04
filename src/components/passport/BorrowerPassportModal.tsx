@@ -27,22 +27,22 @@ export default function BorrowerPassportModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-slate-900/50" onClick={onClose} />
-      <div className="relative z-10 w-full max-w-lg rounded-2xl bg-white p-5 shadow-xl sm:p-6 max-h-[90vh] overflow-y-auto">
+      <div className="relative z-10 w-full max-w-lg rounded-2xl bg-card p-5 shadow-xl sm:p-6 max-h-[90vh] overflow-y-auto">
         <div className="mb-4 flex items-start justify-between">
           <div className="flex items-center gap-2">
             <CreditCard size={16} className="text-teal-600" />
             <div>
-              <p className="text-xs font-medium uppercase tracking-wide text-slate-400">Credit Passport</p>
-              <h3 className="text-slate-900 font-semibold text-lg">{passport.name}</h3>
-              <p className="text-slate-400 text-xs mt-0.5">{passport.role}</p>
+              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Credit Passport</p>
+              <h3 className="text-foreground font-semibold text-lg">{passport.name}</h3>
+              <p className="text-muted-foreground text-xs mt-0.5">{passport.role}</p>
             </div>
           </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600" aria-label="Close">
+          <button onClick={onClose} className="text-muted-foreground hover:text-muted-foreground" aria-label="Close">
             <X size={18} />
           </button>
         </div>
 
-        <div className="flex items-center gap-4 rounded-xl bg-slate-50 p-4">
+        <div className="flex items-center gap-4 rounded-xl bg-secondary p-4">
           <div
             className="flex size-16 shrink-0 items-center justify-center rounded-full text-xl font-bold text-white"
             style={{ backgroundColor: badgeColor }}
@@ -50,8 +50,8 @@ export default function BorrowerPassportModal({
             {passport.overallScore}
           </div>
           <div>
-            <p className="text-sm font-semibold text-slate-800">{passport.band} score</p>
-            <p className="text-xs text-slate-500 mt-0.5">{passport.summary}</p>
+            <p className="text-sm font-semibold text-foreground">{passport.band} score</p>
+            <p className="text-xs text-muted-foreground mt-0.5">{passport.summary}</p>
           </div>
         </div>
 
@@ -66,34 +66,34 @@ export default function BorrowerPassportModal({
         )}
 
         <div className="mt-4 grid grid-cols-3 gap-3 text-sm">
-          <div className="rounded-xl border border-slate-100 px-3 py-2.5">
-            <p className="text-slate-400 text-[11px]">Loans completed</p>
-            <p className="text-slate-800 font-medium mt-0.5">{passport.loansCompleted}</p>
+          <div className="rounded-xl border border-border px-3 py-2.5">
+            <p className="text-muted-foreground text-[11px]">Loans completed</p>
+            <p className="text-foreground font-medium mt-0.5">{passport.loansCompleted}</p>
           </div>
-          <div className="rounded-xl border border-slate-100 px-3 py-2.5">
-            <p className="text-slate-400 text-[11px]">Active loans</p>
-            <p className="text-slate-800 font-medium mt-0.5">{passport.activeLoans}</p>
+          <div className="rounded-xl border border-border px-3 py-2.5">
+            <p className="text-muted-foreground text-[11px]">Active loans</p>
+            <p className="text-foreground font-medium mt-0.5">{passport.activeLoans}</p>
           </div>
-          <div className="rounded-xl border border-slate-100 px-3 py-2.5">
-            <p className="text-slate-400 text-[11px]">Status</p>
-            <p className="text-slate-800 font-medium mt-0.5">{passport.memberSince}</p>
+          <div className="rounded-xl border border-border px-3 py-2.5">
+            <p className="text-muted-foreground text-[11px]">Status</p>
+            <p className="text-foreground font-medium mt-0.5">{passport.memberSince}</p>
           </div>
         </div>
 
         <div className="mt-5 space-y-4">
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Score breakdown</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Score breakdown</p>
           {passport.factors.map((f) => (
             <div key={f.key}>
               <div className="flex items-center justify-between text-sm">
-                <span className="font-medium text-slate-700">{f.label}</span>
-                <span className="font-mono text-xs text-slate-400">{f.score}/100</span>
+                <span className="font-medium text-foreground">{f.label}</span>
+                <span className="font-mono text-xs text-muted-foreground">{f.score}/100</span>
               </div>
-              <div className="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-slate-100">
+              <div className="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-secondary">
                 <div className="h-full rounded-full" style={{ width: `${f.score}%`, backgroundColor: barColor[bandOf(f.score)] }} />
               </div>
-              <p className="mt-1.5 text-xs text-slate-500">{f.detail}</p>
+              <p className="mt-1.5 text-xs text-muted-foreground">{f.detail}</p>
               {f.tip && (
-                <p className="mt-1 flex items-start gap-1.5 text-xs font-medium text-slate-600">
+                <p className="mt-1 flex items-start gap-1.5 text-xs font-medium text-muted-foreground">
                   <Lightbulb size={11} className="mt-0.5 shrink-0 text-amber-500" />
                   {f.tip}
                 </p>
@@ -102,7 +102,7 @@ export default function BorrowerPassportModal({
           ))}
         </div>
 
-        <p className="mt-5 text-[11px] text-slate-400">
+        <p className="mt-5 text-[11px] text-muted-foreground">
           Built from this borrower's actual repayment behaviour on the platform — not a single accept/reject
           signal. A hardship request made proactively, before a payment is missed, counts in their favour here.
         </p>

@@ -1,8 +1,14 @@
 import React, { useState, useEffect } from "react";
 import jsPDF from "jspdf";
 import { supabase } from "@/lib/supabaseClient";
+<<<<<<< HEAD
 import VoiceButton from "@/components/voice/VoiceButton";
 import { extractFormFields } from "@/lib/voice";
+=======
+import { DEMO_MODE, demoManualLedgers, demoPlatformLoans, demoPayments, demoPayments2 } from "@/lib/demoData";
+import LenderPassportModal from "@/components/passport/LenderPassportModal";
+import { getLenderTrustPassport, type LenderTrustPassport } from "@/lib/creditPassport";
+>>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
 
 // ── Types ──────────────────────────────────────────────────────────────────
 type LedgerStatus = "active" | "paid" | "overdue" | "written-off" | "settled-early";
@@ -255,6 +261,17 @@ function ManualLedger() {
   useEffect(() => {
     let active = true;
     async function load() {
+<<<<<<< HEAD
+=======
+      if (DEMO_MODE) {
+        if (!active) return;
+        setUserId("demo-borrower");
+        setLedgers(demoManualLedgers);
+        setLoading(false);
+        return;
+      }
+
+>>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
       const { data: { user } } = await supabase.auth.getUser();
       if (!user || !active) return;
       setUserId(user.id);
@@ -287,6 +304,7 @@ function ManualLedger() {
     initialNote: "",
   };
   const [form, setForm] = useState(emptyForm);
+<<<<<<< HEAD
 
   // Voice fill: record -> Gemini transcribes it -> Gemini extracts fields ->
   // merged into the form above. User still reviews/edits before submitting.
@@ -298,6 +316,8 @@ function ManualLedger() {
     setVoiceNote(`Filled from: "${transcript}" — review before adding.`);
   }
 
+=======
+>>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
   const [txForm, setTxForm] = useState({
     date: new Date().toISOString().slice(0, 10),
     type: "repayment" as TxType,
@@ -355,7 +375,10 @@ function ManualLedger() {
     const nl = mapLedgerRow({ ...ledgerRow, manual_ledger_transactions: txRow ? [txRow] : [] });
     setLedgers((prev) => [nl, ...prev]);
     setForm(emptyForm);
+<<<<<<< HEAD
     setVoiceNote(null);
+=======
+>>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
     setModal(null);
   }
 
@@ -657,6 +680,7 @@ function ManualLedger() {
       {modal === "addLender" && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm p-4">
           <div className="bg-card w-full max-w-xl rounded-2xl shadow-2xl border border-border overflow-hidden max-h-[90vh] flex flex-col">
+<<<<<<< HEAD
             <div className="flex items-center justify-between px-6 py-5 border-b border-border gap-3">
               <div>
                 <h2 className="font-display font-semibold text-lg text-foreground">Add Lender Manually</h2>
@@ -679,6 +703,20 @@ function ManualLedger() {
             {voiceNote && (
               <p className="px-6 pt-3 text-xs text-muted-foreground italic">{voiceNote}</p>
             )}
+=======
+            <div className="flex items-center justify-between px-6 py-5 border-b border-border">
+              <div>
+                <h2 className="font-display font-semibold text-lg text-foreground">Add Lender Manually</h2>
+                <p className="text-xs text-muted-foreground mt-0.5">Enter lender contact and full loan amount details</p>
+              </div>
+              <button
+                onClick={() => setModal(null)}
+                className="w-9 h-9 flex items-center justify-center rounded-xl border border-border text-muted-foreground hover:bg-secondary transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+>>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
             <form onSubmit={handleAddLender} className="overflow-y-auto flex-1 p-6 space-y-6">
               <div>
                 <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-3">Lender Information</p>
@@ -822,6 +860,24 @@ function PlatformLoanDetail({ loan, onClose }: { loan: PlatformLoan; onClose: ()
   useEffect(() => {
     let active = true;
     async function load() {
+<<<<<<< HEAD
+=======
+      if (DEMO_MODE) {
+        if (!active) return;
+        const demoSet = loan.id === 9002 ? demoPayments2 : loan.id === 9001 ? demoPayments : [];
+        setPayments(
+          [...demoSet].reverse().map((p) => ({
+            cycleMonth: p.cycle_month,
+            amountDue: p.amount_due,
+            amountPaid: p.amount_paid,
+            paidOnTime: p.paid_on_time,
+          }))
+        );
+        setLoading(false);
+        return;
+      }
+
+>>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
       const { data } = await supabase
         .from("payments")
         .select("cycle_month, amount_due, amount_paid, paid_on_time")
@@ -895,10 +951,33 @@ function PlatformLoans() {
   const [loading, setLoading] = useState(true);
   const [loans, setLoans] = useState<PlatformLoan[]>([]);
   const [detailLoan, setDetailLoan] = useState<PlatformLoan | null>(null);
+<<<<<<< HEAD
+=======
+  const [passportView, setPassportView] = useState<LenderTrustPassport | null>(null);
+  const [tab, setTab] = useState<"active" | "past">("active");
+  const [search, setSearch] = useState("");
+  const [repaidByLoan, setRepaidByLoan] = useState<Map<number, number>>(new Map());
+>>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
 
   useEffect(() => {
     let active = true;
     async function load() {
+<<<<<<< HEAD
+=======
+      if (DEMO_MODE) {
+        if (!active) return;
+        setLoans(demoPlatformLoans);
+        setRepaidByLoan(
+          new Map([
+            [9001, demoPayments.reduce((s, p) => s + p.amount_paid, 0)],
+            [9002, demoPayments2.reduce((s, p) => s + p.amount_paid, 0)],
+          ])
+        );
+        setLoading(false);
+        return;
+      }
+
+>>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
       const { data: { user } } = await supabase.auth.getUser();
       if (!user || !active) return;
 
@@ -932,6 +1011,21 @@ function PlatformLoans() {
           status: l.status,
         }))
       );
+<<<<<<< HEAD
+=======
+
+      const { data: paymentRows } = await supabase
+        .from("payments")
+        .select("loan_id, amount_paid")
+        .in("loan_id", loanRows.map((l) => l.id));
+
+      if (!active) return;
+      const repaidMap = new Map<number, number>();
+      for (const p of paymentRows ?? []) {
+        repaidMap.set(p.loan_id, (repaidMap.get(p.loan_id) ?? 0) + p.amount_paid);
+      }
+      setRepaidByLoan(repaidMap);
+>>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
       setLoading(false);
     }
     load();
@@ -956,6 +1050,7 @@ function PlatformLoans() {
     );
   }
 
+<<<<<<< HEAD
   return (
     <div className="space-y-4">
       {loans.map((loan) => (
@@ -994,6 +1089,144 @@ function PlatformLoans() {
         </div>
       ))}
       {detailLoan && <PlatformLoanDetail loan={detailLoan} onClose={() => setDetailLoan(null)} />}
+=======
+  const activeLoans = loans.filter((l) => l.status === "active" || l.status === "overdue");
+  const pastLoans = loans.filter((l) => l.status !== "active" && l.status !== "overdue");
+  const list = tab === "active" ? activeLoans : pastLoans;
+  const filtered = list.filter((l) => l.lenderName.toLowerCase().includes(search.toLowerCase()));
+
+  const totalOutstanding = activeLoans.reduce((s, l) => s + l.outstanding, 0);
+  const totalRepaidPlatform = activeLoans.reduce((s, l) => s + (repaidByLoan.get(l.id) ?? 0), 0);
+  const totalBorrowed = totalOutstanding + totalRepaidPlatform;
+
+  return (
+    <div>
+      {/* Tabs */}
+      <div className="flex items-center gap-1 mb-6 bg-secondary w-fit rounded-full p-1">
+        {(
+          [
+            ["active", `Active loans \u00B7 ${activeLoans.length}`],
+            ["past", `Past loans \u00B7 ${pastLoans.length}`],
+          ] as const
+        ).map(([key, label]) => (
+          <button
+            key={key}
+            onClick={() => {
+              setTab(key);
+              setSearch("");
+            }}
+            className={`px-5 py-2 rounded-full text-sm font-semibold transition-all ${
+              tab === key ? "bg-slate-900 text-white shadow-sm" : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {tab === "active" && (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+          {[
+            { label: "TOTAL OUTSTANDING", value: formatINR(totalOutstanding), sub: "across all platform loans" },
+            { label: "TOTAL BORROWED", value: formatINR(totalBorrowed), sub: "principal disbursed" },
+            { label: "TOTAL REPAID", value: formatINR(totalRepaidPlatform), sub: "across platform loans" },
+          ].map((c) => (
+            <div key={c.label} className="bg-card rounded-2xl border border-border p-5 shadow-[var(--shadow-panel)]">
+              <p className="text-[10px] font-semibold tracking-widest text-muted-foreground uppercase mb-2">{c.label}</p>
+              <p className="font-display text-3xl font-bold text-foreground mb-1">{c.value}</p>
+              <p className="text-xs text-muted-foreground">{c.sub}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Search */}
+      <div className="bg-card rounded-2xl border border-border shadow-[var(--shadow-panel)] px-5 py-3.5 mb-4">
+        <div className="flex items-center gap-3">
+          <span className="text-xl">🔍</span>
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search by lender name\u2026"
+            className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
+          />
+        </div>
+      </div>
+
+      <div className="bg-card rounded-2xl border border-border shadow-[var(--shadow-panel)] overflow-hidden">
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="border-b border-border">
+            <th className="text-left px-6 py-4 text-xs font-semibold text-muted-foreground">Lender</th>
+            <th className="text-left px-4 py-4 text-xs font-semibold text-muted-foreground">Target Payment</th>
+            <th className="text-left px-4 py-4 text-xs font-semibold text-muted-foreground">Due Date</th>
+            <th className="text-left px-4 py-4 text-xs font-semibold text-muted-foreground">Outstanding</th>
+            <th className="text-left px-4 py-4 text-xs font-semibold text-muted-foreground">Status</th>
+            <th className="px-4 py-4" />
+          </tr>
+        </thead>
+        <tbody>
+          {filtered.length === 0 && (
+            <tr>
+              <td colSpan={6} className="text-center py-16 text-muted-foreground">
+                No {tab} loans found.
+              </td>
+            </tr>
+          )}
+          {filtered.map((loan, i) => (
+            <tr
+              key={loan.id}
+              onClick={() => setDetailLoan(loan)}
+              className={`cursor-pointer hover:bg-secondary/50 transition-colors ${i !== filtered.length - 1 ? "border-b border-border" : ""}`}
+            >
+              <td className="px-6 py-4">
+                <div className="flex items-center gap-3">
+                  <span
+                    className={`w-2.5 h-2.5 rounded-full shrink-0 ${
+                      loan.status === "active" ? "bg-success" : loan.status === "overdue" ? "bg-danger" : "bg-muted-foreground/40"
+                    }`}
+                  />
+                  <div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const passport = getLenderTrustPassport(loan.lenderName);
+                        if (passport) setPassportView(passport);
+                      }}
+                      className="font-semibold text-foreground hover:underline underline-offset-2 text-left"
+                    >
+                      {loan.lenderName}
+                    </button>
+                  </div>
+                </div>
+              </td>
+              <td className="px-4 py-4 font-semibold text-foreground">{formatINR(loan.targetAmount)}</td>
+              <td className="px-4 py-4 text-muted-foreground text-sm">
+                {new Date(loan.dueDate).toLocaleDateString("en-IN", { month: "short", day: "numeric", year: "numeric" })}
+              </td>
+              <td className="px-4 py-4 font-semibold text-foreground">{formatINR(loan.outstanding)}</td>
+              <td className="px-4 py-4">
+                <StatusPill status={loan.status as LedgerStatus} />
+              </td>
+              <td className="px-4 py-4 text-right">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setDetailLoan(loan);
+                  }}
+                  className="text-xs text-muted-foreground hover:text-foreground px-3 py-1.5 rounded-lg border border-border hover:bg-secondary transition-colors font-medium"
+                >
+                  History
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      </div>
+      {detailLoan && <PlatformLoanDetail loan={detailLoan} onClose={() => setDetailLoan(null)} />}
+      {passportView && <LenderPassportModal passport={passportView} onClose={() => setPassportView(null)} />}
+>>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
     </div>
   );
 }

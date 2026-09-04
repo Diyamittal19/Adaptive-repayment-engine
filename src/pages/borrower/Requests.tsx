@@ -15,6 +15,10 @@ import {
 import { getLenderTrustPassport, bandTone, type LenderTrustPassport } from "@/lib/creditPassport"
 import LenderPassportModal from "@/components/passport/LenderPassportModal"
 import { supabase } from "@/lib/supabaseClient"
+<<<<<<< HEAD
+=======
+import { DEMO_MODE, demoLenderDirectory, demoMyRequests, demoPlatformLoans } from "@/lib/demoData"
+>>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
 import { logAuditEvent } from "@/lib/auditLog"
 
 /* =========================================================================
@@ -170,6 +174,16 @@ function SearchLenders({
   useEffect(() => {
     let active = true
     async function load() {
+<<<<<<< HEAD
+=======
+      if (DEMO_MODE) {
+        if (!active) return
+        setLenders(demoLenderDirectory)
+        setLoading(false)
+        return
+      }
+
+>>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
       const { data: lenderProfiles } = await supabase
         .from("lender_profiles")
         .select("lender_id, org_type, district, city, rate_min, rate_max, max_amount, rating, verified")
@@ -479,23 +493,41 @@ function NegotiatePanel({
 function MyRequests({
   requests,
   onRespond,
+<<<<<<< HEAD
   canRequestHardship,
+=======
+  loans,
+>>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
   onSubmitHardship,
 }: {
   requests: SentRequest[]
   onRespond: (id: number, action: RespondAction, amount?: number, note?: string) => void
+<<<<<<< HEAD
   canRequestHardship: boolean
   onSubmitHardship: (amount: string, note: string, repeat: boolean) => Promise<string | null>
+=======
+  loans: { id: number; lenderId: string; lenderName: string }[]
+  onSubmitHardship: (loanId: number, amount: string, note: string, repeat: boolean) => Promise<string | null>
+>>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
 }) {
   const [activeTab, setActiveTab] = useState<MyRequestStatus>("Pending")
   const [passportView, setPassportView] = useState<LenderTrustPassport | null>(null)
   const [showHardshipForm, setShowHardshipForm] = useState(false)
+<<<<<<< HEAD
+=======
+  const [hardshipLoanId, setHardshipLoanId] = useState<number | null>(loans[0]?.id ?? null)
+>>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
   const [hardshipAmount, setHardshipAmount] = useState("")
   const [hardshipNote, setHardshipNote] = useState("")
   const [hardshipRepeat, setHardshipRepeat] = useState(false)
   const [hardshipSubmitting, setHardshipSubmitting] = useState(false)
   const [hardshipError, setHardshipError] = useState<string | null>(null)
 
+<<<<<<< HEAD
+=======
+  const canRequestHardship = loans.length > 0
+
+>>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
   const counts = useMemo(() => {
     return myTabs.reduce<Record<string, number>>((acc, t) => {
       acc[t] = requests.filter((r) => r.status === t).length
@@ -507,9 +539,19 @@ function MyRequests({
 
   async function handleHardshipSubmit(e: React.FormEvent) {
     e.preventDefault()
+<<<<<<< HEAD
     setHardshipSubmitting(true)
     setHardshipError(null)
     const err = await onSubmitHardship(hardshipAmount, hardshipNote, hardshipRepeat)
+=======
+    if (!hardshipLoanId) {
+      setHardshipError("Pick which lender this request is for.")
+      return
+    }
+    setHardshipSubmitting(true)
+    setHardshipError(null)
+    const err = await onSubmitHardship(hardshipLoanId, hardshipAmount, hardshipNote, hardshipRepeat)
+>>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
     if (err) {
       setHardshipError(err)
       setHardshipSubmitting(false)
@@ -558,6 +600,27 @@ function MyRequests({
       {showHardshipForm && (
         <form onSubmit={handleHardshipSubmit} className="rounded-2xl border border-border bg-card p-5 space-y-4">
           <div>
+<<<<<<< HEAD
+=======
+            <label className="text-xs font-medium text-muted-foreground">Requesting hardship adjustment from</label>
+            {loans.length > 1 ? (
+              <select
+                value={hardshipLoanId ?? ""}
+                onChange={(e) => setHardshipLoanId(Number(e.target.value))}
+                className="mt-1.5 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-info"
+              >
+                {loans.map((l) => (
+                  <option key={l.id} value={l.id}>
+                    {l.lenderName}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <p className="mt-1.5 text-sm font-semibold text-foreground">{loans[0]?.lenderName ?? "—"}</p>
+            )}
+          </div>
+          <div>
+>>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
             <label className="text-xs font-medium text-muted-foreground">What payment can you manage this cycle?</label>
             <input
               type="text"
@@ -667,11 +730,19 @@ function MyRequests({
    ========================================================================= */
 
 export default function Requests() {
+<<<<<<< HEAD
   const [view, setView] = useState<"find" | "mine">("find")
   const [loading, setLoading] = useState(true)
   const [userId, setUserId] = useState<string | null>(null)
   const [requests, setRequests] = useState<SentRequest[]>([])
   const [loan, setLoan] = useState<{ id: number; lenderId: string; lenderName: string } | null>(null)
+=======
+  const [view, setView] = useState<"find" | "mine">("mine")
+  const [loading, setLoading] = useState(true)
+  const [userId, setUserId] = useState<string | null>(null)
+  const [requests, setRequests] = useState<SentRequest[]>([])
+  const [loans, setLoans] = useState<{ id: number; lenderId: string; lenderName: string }[]>([])
+>>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
 
   async function loadHardshipRequests(loanId: number, lenderId: string, lenderName: string) {
     const { data: reqRows } = await supabase
@@ -703,6 +774,7 @@ export default function Requests() {
       .eq("borrower_id", uid)
       .order("created_at", { ascending: false })
 
+<<<<<<< HEAD
     const { data: loanRow } = await supabase
       .from("loans")
       .select("id, lender_id")
@@ -720,6 +792,30 @@ export default function Requests() {
       hardshipItems = await loadHardshipRequests(loanRow.id, loanRow.lender_id, lenderName)
     }
     setLoan(currentLoan)
+=======
+    const { data: loanRows } = await supabase
+      .from("loans")
+      .select("id, lender_id")
+      .eq("borrower_id", uid)
+
+    let hardshipItems: SentRequest[] = []
+    const currentLoans: { id: number; lenderId: string; lenderName: string }[] = []
+
+    if (loanRows && loanRows.length > 0) {
+      const { data: lenderProfiles } = await supabase
+        .from("profiles")
+        .select("id, name")
+        .in("id", [...new Set(loanRows.map((l) => l.lender_id))])
+      const nameById = new Map((lenderProfiles ?? []).map((p) => [p.id, p.name]))
+
+      for (const loanRow of loanRows) {
+        const lenderName = nameById.get(loanRow.lender_id) ?? "Your lender"
+        currentLoans.push({ id: loanRow.id, lenderId: loanRow.lender_id, lenderName })
+        hardshipItems = [...hardshipItems, ...(await loadHardshipRequests(loanRow.id, loanRow.lender_id, lenderName))]
+      }
+    }
+    setLoans(currentLoans)
+>>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
 
     if (!apps || apps.length === 0) {
       setRequests(hardshipItems)
@@ -764,6 +860,24 @@ export default function Requests() {
   useEffect(() => {
     let active = true
     async function load() {
+<<<<<<< HEAD
+=======
+      if (DEMO_MODE) {
+        if (!active) return
+        setUserId("demo-borrower")
+        setLoans(
+          demoPlatformLoans.map((l) => ({
+            id: l.id,
+            lenderId: demoLenderDirectory.find((d) => d.name === l.lenderName)?.id ?? l.lenderName,
+            lenderName: l.lenderName,
+          }))
+        )
+        setRequests(demoMyRequests)
+        setLoading(false)
+        return
+      }
+
+>>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
       const { data: { user } } = await supabase.auth.getUser()
       if (!user || !active) return
       setUserId(user.id)
@@ -777,6 +891,30 @@ export default function Requests() {
   async function handleRequestSent(lender: Lender, amount: string, purpose: string, tenure: string) {
     if (!userId) return
     const amt = parseFloat(amount.replace(/[^0-9.]/g, "")) || 0
+<<<<<<< HEAD
+=======
+
+    if (DEMO_MODE) {
+      setRequests((prev) => [
+        {
+          id: Date.now(),
+          kind: "application" as const,
+          lenderId: lender.id,
+          lenderName: lender.name,
+          lenderType: lender.type,
+          amount: amt,
+          purpose,
+          tenure,
+          sentOn: "Today",
+          status: "Pending",
+          history: [{ id: Date.now(), from: "borrower" as const, amount: amt, note: purpose, date: "Today" }],
+        },
+        ...prev,
+      ])
+      return
+    }
+
+>>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
     const { data: appRow, error } = await supabase
       .from("loan_applications")
       .insert({ borrower_id: userId, lender_id: lender.id, amount: amt, purpose, tenure, status: "Pending" })
@@ -883,9 +1021,37 @@ export default function Requests() {
 
   const activeCount = requests.filter((r) => r.status === "Pending" || r.status === "Negotiating").length
 
+<<<<<<< HEAD
   async function handleHardshipSubmit(amount: string, note: string, repeat: boolean): Promise<string | null> {
     if (!loan) return "No active loan found to attach this request to."
     const amt = parseFloat(amount.replace(/[^0-9.]/g, "")) || null
+=======
+  async function handleHardshipSubmit(loanId: number, amount: string, note: string, repeat: boolean): Promise<string | null> {
+    const loan = loans.find((l) => l.id === loanId)
+    if (!loan) return "Pick which lender this request is for."
+    const amt = parseFloat(amount.replace(/[^0-9.]/g, "")) || null
+
+    if (DEMO_MODE) {
+      setRequests((prev) => [
+        {
+          id: Date.now(),
+          kind: "hardship",
+          lenderId: loan.lenderId,
+          lenderName: loan.lenderName,
+          lenderType: "Individual lender",
+          amount: amt ?? 0,
+          purpose: note,
+          tenure: repeat ? "Multiple cycles" : "This cycle only",
+          sentOn: "Today",
+          status: "Pending",
+          history: [],
+        },
+        ...prev,
+      ])
+      return null
+    }
+
+>>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
     const { data: reqRow, error } = await supabase
       .from("requests")
       .insert({ loan_id: loan.id, type: "hardship", status: "Pending", note: note || null, requested_amount: amt, repeat })
@@ -971,7 +1137,11 @@ export default function Requests() {
         <MyRequests
           requests={requests}
           onRespond={handleRespond}
+<<<<<<< HEAD
           canRequestHardship={!!loan}
+=======
+          loans={loans}
+>>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
           onSubmitHardship={handleHardshipSubmit}
         />
       )}

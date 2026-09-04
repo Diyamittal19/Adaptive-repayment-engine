@@ -24,6 +24,10 @@ import {
 import type { ReactNode } from "react";
 import CreditPassportCard from "@/components/passport/CreditPassportCard";
 import { supabase } from "@/lib/supabaseClient";
+<<<<<<< HEAD
+=======
+import { DEMO_MODE, demoLoan, demoLenderName, demoPayments, demoPendingHardship } from "@/lib/demoData";
+>>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
 
 // ─── Shared primitives (Card, StatCard, IncomeChart, StatusBar) ───────────
 
@@ -176,6 +180,19 @@ export default function Dashboard({ onNavigateToRequests }: { onNavigateToReques
     let active = true;
 
     async function load() {
+<<<<<<< HEAD
+=======
+      if (DEMO_MODE) {
+        if (!active) return;
+        setLoan(demoLoan);
+        setLenderName(demoLenderName);
+        setPayments(demoPayments);
+        setShowAlert(demoPendingHardship);
+        setLoading(false);
+        return;
+      }
+
+>>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
       const { data: { user } } = await supabase.auth.getUser();
       if (!user || !active) return;
 
@@ -399,7 +416,11 @@ export default function Dashboard({ onNavigateToRequests }: { onNavigateToReques
           <table className="w-full min-w-[720px] border-collapse text-left">
             <thead>
               <tr className="border-b border-border">
+<<<<<<< HEAD
                 {["Expense", "Category", "Due date", "Amount", "Status", ""].map((h) => (
+=======
+                {["Lender", "Due date", "Amount", "Status", ""].map((h) => (
+>>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
                   <th key={h} className="pb-3 text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
                     {h}
                   </th>
@@ -408,8 +429,12 @@ export default function Dashboard({ onNavigateToRequests }: { onNavigateToReques
             </thead>
             <tbody>
               <tr className="border-b border-border last:border-0">
+<<<<<<< HEAD
                 <td className="py-4 text-sm font-medium text-foreground">Loan payment \u2014 {lenderName}</td>
                 <td className="py-4 text-sm text-muted-foreground">Loan</td>
+=======
+                <td className="py-4 text-sm font-medium text-foreground">{lenderName}</td>
+>>>>>>> c5a36b1fdb84f54263bcf32e76d555fde8d95a50
                 <td className="py-4 text-sm text-foreground">
                   {dueDateLabel}
                   <span className="block text-xs text-muted-foreground">
