@@ -194,10 +194,10 @@ function FeatureInDepthCard({ feature }: { feature: PremiumFeature }) {
 
 export default function Premium() {
   const heroStats: { icon: LucideIcon; value: string; label: string }[] = [
-    { icon: Sparkles, value: "6", label: "AI tools unlocked" },
-    { icon: Clock, value: "24/7", label: "Continuous monitoring" },
-    { icon: TrendingUp, value: "50%", label: "Faster reviews" },
-    { icon: ShieldAlert, value: "0", label: "Blind approvals" },
+    { icon: ShieldAlert, value: "AI-assisted", label: "Credit Passport" },
+    { icon: Mic, value: "Unlimited", label: "Voice Intelligence" },
+    { icon: Sparkles, value: "Instant", label: "What-If Simulator" },
+    { icon: Radar, value: "Predictive", label: "Default Risk" },
   ]
 
   return (
@@ -220,14 +220,13 @@ export default function Premium() {
               Unlock smarter <span className="text-emerald-400">Lending Decisions</span>
             </h1>
             <p className="text-slate-400 text-sm mt-2 leading-relaxed">
-              Review faster and lend smarter with AI-powered tools built to cut manual work, catch risk earlier, and give every borrower a fair, data-backed decision.
             </p>
           </div>
 
           <div className="text-left shrink-0">
             <p className="text-slate-400 text-[11px] uppercase tracking-widest">Starting at</p>
             <p className="text-white font-extrabold leading-none mt-1.5 text-4xl sm:text-5xl">
-              ₹2,499<span className="text-slate-400 text-lg font-semibold">/mo</span>
+              ₹299<span className="text-slate-400 text-lg font-semibold">/mo</span>
             </p>
           </div>
         </div>
@@ -255,7 +254,7 @@ export default function Premium() {
       </div>
 
       {/* Free vs Premium comparison */}
-      <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: "#05070d" }}>
+      <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: "rgb(5, 7, 13)" }}>
         <div className="text-center pt-10 pb-8 px-6">
           <h2 className="text-white text-2xl sm:text-3xl font-extrabold">Free vs. Premium</h2>
           <p className="text-slate-400 text-sm mt-2">See exactly what you unlock when you upgrade.</p>
@@ -278,14 +277,12 @@ export default function Premium() {
             <tbody>
               {(
                 [
-                  { label: "Borrower onboarding", free: "Manual, up to 3 days", premium: "Automated, minutes" },
-                  { label: "Credit assessment", free: "Manual review only", premium: "AI-assisted Credit Passport" },
-                  { label: "Case file generation", free: false, premium: "Auto-generated, audit-ready" },
-                  { label: "Voice-logged notes", free: false, premium: "Unlimited, 3 languages" },
-                  { label: "Default risk forecasting", free: false, premium: "Predictive early warnings" },
-                  { label: "What-if scenario testing", free: false, premium: "Instant, live portfolio data" },
-                  { label: "Lender network visibility", free: "This lender only", premium: "3+ linked lenders" },
-                  { label: "Support", free: "Email, 72h response", premium: "Priority + dedicated support" },
+                  { label: "Credit Passport", free: false , premium: "AI-assisted Credit Passport" },
+                  { label: "Unlimited Voice Intelligence", free: "20 per month", premium: "100 per month" },
+                  { label: "What-If Simulator", free: "10 per month", premium: "Instant, live portfolio data" },
+                  { label: "Predictive Default Risk", free: false, premium: "Saves from missed deadlines" },
+                  { label: "Borrower Case File Export", free: false, premium: "1-click PDF export" },
+                  { label: "Bulk Borrower Import", free: false, premium: "500+ rows per upload" },
                 ] as { label: string; free: string | false; premium: string }[]
               ).map((row, i, arr) => (
                 <tr key={row.label} className={i !== arr.length - 1 ? "border-b border-white/5" : ""}>
