@@ -479,26 +479,17 @@ function DemoSection() {
         </FadeIn>
 
         <FadeIn delay={0.12}>
-          <div className="relative rounded-2xl overflow-hidden bg-[#0D1C30] aspect-video flex items-center justify-center shadow-2xl border border-border group cursor-pointer">
-            <div
-              className="absolute inset-0 opacity-[0.07]"
-              style={{
-                backgroundImage:
-                  "linear-gradient(rgba(8,145,178,1) 1px, transparent 1px), linear-gradient(90deg, rgba(8,145,178,1) 1px, transparent 1px)",
-                backgroundSize: "48px 48px",
-              }}
-            />
-            <div className="relative flex flex-col items-center gap-5">
-              <div className="w-20 h-20 rounded-full border border-white/20 bg-white/8 flex items-center justify-center group-hover:bg-white/15 transition-all duration-300 backdrop-blur-sm">
-                <Play className="w-8 h-8 text-white ml-1" fill="currentColor" />
-              </div>
-              <div className="text-center">
-                <div className="text-white font-semibold text-base">Product Demo</div>
-                <div className="text-white/35 text-sm mt-1">Coming soon</div>
-              </div>
-            </div>
-          </div>
-        </FadeIn>
+  <div className="relative rounded-2xl overflow-hidden bg-[#0D1C30] aspect-video shadow-2xl border border-border">
+    <video
+      className="w-full h-full object-cover"
+      controls
+      preload="metadata"
+    >
+      <source src="/Demo Video for landing page.mp4" type="video/mp4" />
+      Your browser does not support the video tag.
+    </video>
+  </div>
+</FadeIn>
 
         <FadeIn delay={0.22} className="mt-8">
           <div className="flex items-center justify-center flex-wrap gap-2">
