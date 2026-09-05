@@ -15,7 +15,7 @@
 </p>
 
 <p align="center">
-  <img src="./Screenshots/landing-page.png" alt="Adaptive Repayment Landing Page" width="100%" />
+  <img src="./Screenshots/landing page.png" alt="Adaptive Repayment Landing Page" width="100%" />
 </p>
 
 ---
